@@ -3,9 +3,16 @@ Sakuga4K Google Drive Auto-Sync & Batch Archive Engine
 """
 
 import os
+import sys
 import shutil
 import zipfile
 from typing import Optional, List
+
+# Ensure backend directory is in sys.path
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
 from config import DRIVE_MOUNT_POINT, DRIVE_OUTPUT_DIR
 
 class DriveSyncManager:

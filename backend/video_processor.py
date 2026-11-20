@@ -4,9 +4,16 @@ Extracts frames, executes rolling neural upscale, purges raw frames, and reassem
 """
 
 import os
+import sys
 import shutil
 import subprocess
 from typing import Callable, Optional
+
+# Ensure backend directory is in sys.path
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
 from config import FRAMES_DIR, OUTPUT_DIR, DEFAULT_CRF, FFMPEG_PRESET, PIX_FMT, POP_UNSHARP_FILTER
 from models import model_manager
 

@@ -4,11 +4,18 @@ Implements contracts.json v1.0.0 for Real-Time 4K Anime Video Upscaling
 """
 
 import os
+import sys
 import uuid
 import json
 import asyncio
 import shutil
 from typing import Dict, Any, Optional
+
+# Ensure backend directory is in sys.path for direct submodule imports
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -23,10 +30,11 @@ app = FastAPI(
 )
 
 # CORS Middleware allowing direct browser-to-Colab uploads from Vercel
+# Note: allow_credentials must be False when allow_origins is ["*"] per W3C CORS specification
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

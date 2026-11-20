@@ -15,18 +15,21 @@ export function Header() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const checkHealth = useCallback(async (url: string) => {
-    if (!url || !url.startsWith("http")) {
+    let sanitized = url.trim().replace(/\/+$/, "");
+    if (!sanitized) {
       setHealth(null);
       return;
+    }
+    if (!sanitized.startsWith("http://") && !sanitized.startsWith("https://")) {
+      sanitized = `https://${sanitized}`;
     }
     setIsChecking(true);
     setErrorMsg(null);
     try {
-      const sanitized = url.replace(/\/+$/, "");
       const res = await fetch(`${sanitized}/api/health`, {
         method: "GET",
         headers: { "Accept": "application/json" },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(12000),
       });
       if (res.ok) {
         const data: HealthStatus = await res.json();

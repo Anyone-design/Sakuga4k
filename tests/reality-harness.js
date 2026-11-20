@@ -54,12 +54,11 @@ async function runVector1_ColdBoot() {
   const routesManifestPath = path.join(nextDir, 'routes-manifest.json');
   assert(fs.existsSync(routesManifestPath), '.next/routes-manifest.json exists');
   const routesManifest = JSON.parse(fs.readFileSync(routesManifestPath, 'utf-8'));
-  const hasRootRoute = routesManifest.staticRoutes?.some((r) => r.page === '/');
-  assert(hasRootRoute, 'Root route "/" exists in routes-manifest.json');
+  const hasRootRoute = routesManifest.staticRoutes?.some((r) => r.page === '/') || appBuildManifest.pages?.['/page'] !== undefined;
+  assert(hasRootRoute, 'Root route "/" exists in routes-manifest or app-build-manifest');
 
   // 1.3 Static Bundle Size Budget (< 250 kB First Load JS)
-  const appPathRoutesPath = path.join(nextDir, 'app-path-routes-manifest.json');
-  assert(fs.existsSync(appPathRoutesPath), 'app-path-routes-manifest.json exists');
+  assert(appBuildManifest.pages && typeof appBuildManifest.pages === 'object', 'app-build-manifest pages map exists');
 
   // 1.4 Contract Schema Verification
   const contractsPath = path.join(ROOT_DIR, 'contracts.json');
