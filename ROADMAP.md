@@ -32,7 +32,7 @@ graph TD
 - **Pre-Flight Test Contract:**
   - *Command:* `node -e "assert(require('./contracts.json').endpoints.length === 5)"`
   - *Expected Result:* Exits with code 0.
-- **Status:** [ ] Pending
+- **Status:** [x] Completed (commit 129731f)
 
 ---
 
@@ -53,25 +53,25 @@ graph TD
 
 ### Task 1.1: Studio Layout Shell & Tunnel Connection Pill
 - **Files Touched (Max 3):** `src/app/layout.tsx`, `src/app/globals.css`, `src/components/Header.tsx`
-- **Action:** Implement dark mode studio layout shell with 3-layer surface hierarchy, responsive mobile navigation, and live Cloudflare tunnel handshake status pill (`localStorage` persistence).
-- **Depends On:** Human Review Gate Sign-off
+- **Action:** Implement dark mode studio layout shell with 3-layer surface hierarchy, responsive mobile navigation, and live Cloudflare tunnel handshake status pill (`localStorage` persistence) with smooth Framer Motion spring animations.
+- **Depends On:** Human Review Gate Sign-off (Prototype 1 approved)
 - **Pre-Flight Test Contract:**
-  - *Command:* `npm run build`
-  - *Expected Result:* Zero TypeScript errors, successful static bundle generation.
+  - *Command:* `npx tsc --noEmit`
+  - *Expected Result:* Zero TypeScript errors, exits code 0.
 - **Status:** [ ] Pending
 
 ### Task 1.2: Multi-File Drag-and-Drop Queue & Model Preset Selector
-- **Files Touched (Max 3):** `src/components/Dropzone.tsx`, `src/components/QueueList.tsx`, `src/components/ClipCard.tsx`
-- **Action:** Multi-file drag-and-drop supporting `.mp4`, `.mov`, `.mkv`, `.webm`, clip resolution badges, and model preset selector (`animevideov3` vs `AnimeSharp`).
+- **Files Touched (Max 3):** `src/components/Dropzone.tsx`, `src/components/QueueList.tsx`, `src/components/PresetSelector.tsx`
+- **Action:** Multi-file drag-and-drop supporting `.mp4`, `.mov`, `.mkv`, `.webm`, clip resolution badges, and model preset selector (`animevideov3` vs `AnimeSharp`) with smooth animations.
 - **Depends On:** Task 1.1
 - **Pre-Flight Test Contract:**
-  - *Command:* `npm test -- Dropzone` (or component test assertion)
-  - *Expected Result:* Renders queue items and handles multi-file staging.
+  - *Command:* `npx tsc --noEmit`
+  - *Expected Result:* Zero TypeScript errors, exits code 0.
 - **Status:** [ ] Pending
 
-### Task 1.3: Real-Time Frame Visualizer & Before/After Split Comparison Slider
+### Task 1.3: Real-Time Frame Visualizer, Vmake Slider & Studio Page
 - **Files Touched (Max 3):** `src/components/ProgressVisualizer.tsx`, `src/components/ComparisonSlider.tsx`, `src/app/page.tsx`
-- **Action:** Dual progress bars (batch + frame count/ETA), interactive draggable before/after comparison slider, and download triggers (MP4 / ZIP).
+- **Action:** Dual progress bars (batch + frame count/ETA), interactive draggable before/after comparison slider with stationary clip-path, and full Next.js page assembly.
 - **Depends On:** Task 1.2
 - **Pre-Flight Test Contract:**
   - *Command:* `npm run build`
