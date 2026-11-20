@@ -1,0 +1,8 @@
+# Ignore Colab backend and tooling for Vercel Next.js build
+backend/
+notebooks/
+tests/
+scripts/
+.agents/
+.pipeline/
+Video Upscaler.md
