@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "projectName": "Sakuga4K",
+  "entities": {
+    "HealthStatus": {
+      "type": "object",
+      "required": ["status", "gpuModel", "vramTotalMB", "vramFreeMB", "activePreset", "driveMounted"],
+      "properties": {
+        "status": { "type": "string", "enum": ["online", "degraded", "busy", "offline"] },
+        "gpuModel": { "type": "string" },
+        "vramTotalMB": { "type": "number" },
+        "vramFreeMB": { "type": "number" },
+        "activePreset": { "type": "string" },
+        "driveMounted": { "type": "boolean" }
+      }
+    },
+    "VideoClip": {
+      "type": "object",
+      "required": ["id", "name", "sizeBytes", "status", "modelPreset"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "sizeBytes": { "type": "integer" },
+        "durationSeconds": { "type": "number" },
+        "originalResolution": { "type": "string", "default": "1920x1080" },
+        "targetResolution": { "type": "string", "default": "3840x2160" },
+        "modelPreset": { "type": "string", "enum": ["animevideov3", "animesharp", "anime6b"] },
+        "status": { "type": "string", "enum": ["queued", "uploading", "processing", "completed", "failed"] },
+        "progressPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "currentFrame": { "type": "integer" },
+        "totalFrames": { "type": "integer" },
+        "etaSeconds": { "type": "number" },
+        "downloadUrl": { "type": "string" },
+        "drivePath": { "type": "string" },
+        "error": { "type": "string" }
+      }
+    },
+    "BatchSummary": {
+      "type": "object",
+      "required": ["batchId", "totalClips", "completedClips", "failedClips"],
+      "properties": {
+        "batchId": { "type": "string", "format": "uuid" },
+        "totalClips": { "type": "integer" },
+        "completedClips": { "type": "integer" },
+        "failedClips": { "type": "integer" },
+        "zipDownloadUrl": { "type": "string" }
+      }
+    }
+  },
+  "endpoints": [
+    {
+      "name": "getHealth",
+      "method": "GET",
+      "path": "/api/health",
+      "responses": {
+        "200": { "$ref": "#/entities/HealthStatus" }
+      },
+      "mockFixtures": [
+        {
+          "status": "online",
+          "gpuModel": "Tesla T4 (16GB)",
+          "vramTotalMB": 15360,
+          "vramFreeMB": 14200,
+          "activePreset": "realesr-animevideov3",
+          "driveMounted": true
+        }
+      ]
+    },
+    {
+      "name": "uploadClip",
+      "method": "POST",
+      "path": "/api/upload",
+      "requestBody": {
+        "type": "multipart/form-data",
+        "required": ["file"],
+        "properties": {
+          "file": { "type": "string", "format": "binary" },
+          "preset": { "type": "string", "enum": ["animevideov3", "animesharp", "anime6b"], "default": "animevideov3" }
+        }
+      },
+      "responses": {
+        "200": { "$ref": "#/entities/VideoClip" },
+        "400": { "type": "object", "properties": { "error": { "type": "string" } } }
+      },
+      "mockFixtures": [
+        {
+          "id": "e9a7e6b2-1c23-4d56-8e7f-0987654321ab",
+          "name": "gojo_hollow_purple_1080p.mp4",
+          "sizeBytes": 14500000,
+          "durationSeconds": 5.0,
+          "originalResolution": "1920x1080",
+          "targetResolution": "3840x2160",
+          "modelPreset": "animevideov3",
+          "status": "queued",
+          "progressPercent": 0,
+          "currentFrame": 0,
+          "totalFrames": 120,
+          "etaSeconds": 24.0,
+          "downloadUrl": "/api/download/e9a7e6b2-1c23-4d56-8e7f-0987654321ab",
+          "drivePath": "MyDrive/Anime_4K_Output/gojo_hollow_purple_4k.mp4"
+        }
+      ]
+    },
+    {
+      "name": "getProgressStream",
+      "method": "GET",
+      "path": "/api/progress/{id}",
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ],
+      "responses": {
+        "200": { "type": "string", "description": "text/event-stream SSE events with VideoClip payload" }
+      }
+    },
+    {
+      "name": "downloadClip",
+      "method": "GET",
+      "path": "/api/download/{id}",
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ],
+      "responses": {
+        "200": { "type": "string", "format": "binary", "description": "video/mp4 file stream" }
+      }
+    },
+    {
+      "name": "downloadBatchZip",
+      "method": "GET",
+      "path": "/api/download-batch/{batchId}",
+      "parameters": [
+        { "name": "batchId", "in": "path", "required": true, "type": "string" }
+      ],
+      "responses": {
+        "200": { "type": "string", "format": "binary", "description": "application/zip archive stream" }
+      }
+    }
+  ]
+}
