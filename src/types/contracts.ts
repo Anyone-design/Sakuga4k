@@ -14,7 +14,7 @@ export interface HealthStatus {
   driveMounted: boolean;
 }
 
-export type ModelPreset = "animevideov3" | "animesharp" | "anime6b";
+export type ModelPreset = "animevideov3" | "animesharp" | "realcugan_pop" | "anime6b";
 export type ClipStatus = "queued" | "uploading" | "processing" | "completed" | "failed";
 
 export interface VideoClip {

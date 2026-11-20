@@ -41,7 +41,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # In-memory session tracking matching contracts.json VideoClip entity
 jobs: Dict[str, Dict[str, Any]] = {}
-ALLOWED_PRESETS = {"animevideov3", "animesharp", "anime6b"}
+ALLOWED_PRESETS = {"animevideov3", "animesharp", "realcugan_pop", "anime6b"}
 
 @app.get("/api/health")
 async def get_health() -> Dict[str, Any]:

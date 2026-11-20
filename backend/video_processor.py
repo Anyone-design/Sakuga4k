@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from typing import Callable, Optional
-from config import FRAMES_DIR, OUTPUT_DIR, DEFAULT_CRF, FFMPEG_PRESET, PIX_FMT
+from config import FRAMES_DIR, OUTPUT_DIR, DEFAULT_CRF, FFMPEG_PRESET, PIX_FMT, POP_UNSHARP_FILTER
 from models import model_manager
 
 class VideoProcessor:
@@ -59,8 +59,9 @@ class VideoProcessor:
         audio_source_path: str,
         output_path: str,
         fps: float = 24.0,
+        apply_pop_filter: bool = False,
     ) -> bool:
-        """Reassembles 4K PNG frames into visually lossless MP4 with original audio stream."""
+        """Reassembles 4K PNG frames into visually lossless MP4 with original audio stream and optional pop filter."""
         frame_pattern = os.path.join(frames_dir, "frame_%06d.png")
 
         cmd = [
@@ -69,6 +70,13 @@ class VideoProcessor:
             "-framerate", str(fps),
             "-i", frame_pattern,
             "-i", audio_source_path,
+        ]
+
+        # Apply Vmake-killer adaptive pop filter if requested
+        if apply_pop_filter:
+            cmd.extend(["-vf", POP_UNSHARP_FILTER])
+
+        cmd.extend([
             "-c:v", "libx264",
             "-crf", str(DEFAULT_CRF),
             "-preset", FFMPEG_PRESET,
@@ -76,7 +84,7 @@ class VideoProcessor:
             "-c:a", "copy",
             "-shortest",
             output_path,
-        ]
+        ])
         res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=False)
         return res.returncode == 0
 
@@ -92,11 +100,12 @@ class VideoProcessor:
         Executes rolling frame upscale:
         1. Extract frames
         2. Process frame-by-frame
-        3. Reassemble 4K video
+        3. Reassemble 4K video (with optional pop filter)
         4. Rolling cleanup invariant: purges extracted frames directory to prevent disk exhaustion
         """
         clip_frames_dir = os.path.join(FRAMES_DIR, clip_id)
         fps = cls.get_video_fps(input_path)
+        apply_pop = (preset == "realcugan_pop")
 
         try:
             total_frames = cls.extract_frames(input_path, clip_frames_dir)
@@ -113,7 +122,13 @@ class VideoProcessor:
             output_filename = f"{clip_id}_4K.mp4"
             output_path = os.path.join(OUTPUT_DIR, output_filename)
 
-            success = cls.reassemble_video(clip_frames_dir, input_path, output_path, fps)
+            success = cls.reassemble_video(
+                clip_frames_dir,
+                input_path,
+                output_path,
+                fps,
+                apply_pop_filter=apply_pop,
+            )
             if not success:
                 raise RuntimeError("FFmpeg reassembly failed")
 

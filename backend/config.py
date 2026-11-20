@@ -19,9 +19,10 @@ DRIVE_OUTPUT_DIR = os.path.join(DRIVE_MOUNT_POINT, "Anime_4K_Output")
 DEFAULT_CRF = 16  # Visually lossless anime encoding standard
 FFMPEG_PRESET = "slow"
 PIX_FMT = "yuv420p"
+POP_UNSHARP_FILTER = "unsharp=5:5:0.8:3:3:0.4"  # Vmake-style edge pop filter
 
 # Allowed model presets matching contracts.json
-ALLOWED_PRESETS = {"animevideov3", "animesharp", "anime6b"}
+ALLOWED_PRESETS = {"animevideov3", "animesharp", "realcugan_pop", "anime6b"}
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(FRAMES_DIR, exist_ok=True)

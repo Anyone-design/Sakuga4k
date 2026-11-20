@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Zap, Sparkles, Layers } from "lucide-react";
+import { Zap, Sparkles, Wand2 } from "lucide-react";
 import type { ModelPreset } from "@/types/contracts";
 
 interface PresetSelectorProps {
@@ -35,11 +35,11 @@ const PRESETS: PresetOption[] = [
     icon: Sparkles,
   },
   {
-    id: "anime6b",
-    name: "Anime 6B",
-    tag: "Art & Shading",
-    description: "Deep gradient preservation for high-detail backgrounds.",
-    icon: Layers,
+    id: "realcugan_pop",
+    name: "Real-CUGAN Pro",
+    tag: "Vmake Killer + Pop",
+    description: "Bilibili Real-CUGAN line restoration + adaptive unsharp pop filter.",
+    icon: Wand2,
   },
 ];
 

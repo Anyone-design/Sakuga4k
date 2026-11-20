@@ -25,7 +25,7 @@
         "durationSeconds": { "type": "number" },
         "originalResolution": { "type": "string", "default": "1920x1080" },
         "targetResolution": { "type": "string", "default": "3840x2160" },
-        "modelPreset": { "type": "string", "enum": ["animevideov3", "animesharp", "anime6b"] },
+        "modelPreset": { "type": "string", "enum": ["animevideov3", "animesharp", "realcugan_pop", "anime6b"] },
         "status": { "type": "string", "enum": ["queued", "uploading", "processing", "completed", "failed"] },
         "progressPercent": { "type": "number", "minimum": 0, "maximum": 100 },
         "currentFrame": { "type": "integer" },
@@ -76,7 +76,7 @@
         "required": ["file"],
         "properties": {
           "file": { "type": "string", "format": "binary" },
-          "preset": { "type": "string", "enum": ["animevideov3", "animesharp", "anime6b"], "default": "animevideov3" }
+          "preset": { "type": "string", "enum": ["animevideov3", "animesharp", "realcugan_pop", "anime6b"], "default": "animevideov3" }
         }
       },
       "responses": {

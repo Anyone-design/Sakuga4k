@@ -39,7 +39,7 @@
 2. Select your neural model preset:
    - `Fast Video v3` for dynamic motion and AMVs.
    - `AnimeSharp 4x` for character close-ups and poster stills.
-   - `Anime 6B` for detailed backgrounds and shading.
+   - `Real-CUGAN Pro` (Vmake Killer + Pop Filter) for maximum crispness and zero facial warping.
 3. Click **Start 4K Upscale**.
 4. Inspect line sharpness on the before/after split slider and download single MP4s, batch ZIPs, or open directly from Google Drive.
 
