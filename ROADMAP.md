@@ -58,7 +58,7 @@ graph TD
 - **Pre-Flight Test Contract:**
   - *Command:* `npx tsc --noEmit`
   - *Expected Result:* Zero TypeScript errors, exits code 0.
-- **Status:** [ ] Pending
+- **Status:** [x] Completed (commit 68ae5e2)
 
 ### Task 1.2: Multi-File Drag-and-Drop Queue & Model Preset Selector
 - **Files Touched (Max 3):** `src/components/Dropzone.tsx`, `src/components/QueueList.tsx`, `src/components/PresetSelector.tsx`
@@ -67,7 +67,7 @@ graph TD
 - **Pre-Flight Test Contract:**
   - *Command:* `npx tsc --noEmit`
   - *Expected Result:* Zero TypeScript errors, exits code 0.
-- **Status:** [ ] Pending
+- **Status:** [x] Completed (commit 08bb5e8)
 
 ### Task 1.3: Real-Time Frame Visualizer, Vmake Slider & Studio Page
 - **Files Touched (Max 3):** `src/components/ProgressVisualizer.tsx`, `src/components/ComparisonSlider.tsx`, `src/app/page.tsx`
@@ -76,7 +76,7 @@ graph TD
 - **Pre-Flight Test Contract:**
   - *Command:* `npm run build`
   - *Expected Result:* Exits 0, production bundle passes.
-- **Status:** [ ] Pending
+- **Status:** [x] Completed (commit af8a0a3)
 
 ---
 
