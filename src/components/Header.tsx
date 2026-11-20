@@ -84,7 +84,7 @@ export function Header() {
       className="sticky top-0 z-50 w-full border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl"
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        
+
         {/* Brand */}
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-md bg-white text-black font-extrabold flex items-center justify-center text-[10px] tracking-tight">
@@ -105,20 +105,18 @@ export function Header() {
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setIsOpen((prev) => !prev)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              isOnline
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${isOnline
                 ? "bg-emerald-500/[0.08] border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/[0.14]"
                 : "bg-white/[0.04] border-white/[0.1] text-zinc-400 hover:text-white hover:bg-white/[0.08]"
-            }`}
+              }`}
           >
             <span className="relative flex h-2 w-2">
               {isOnline && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               )}
               <span
-                className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isOnline ? "bg-emerald-400" : "bg-amber-400"
-                }`}
+                className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? "bg-emerald-400" : "bg-amber-400"
+                  }`}
               />
             </span>
             <span className="font-semibold text-zinc-200">
