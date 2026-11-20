@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-void: #050507;
+  --bg-card: #0b0c10;
+  --bg-elevated: #12141c;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(99, 102, 241, 0.35);
+}
+
+* {
+  font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-void);
+  color: #f4f4f5;
+  min-height: 100vh;
+  overflow-x: hidden;
+  letter-spacing: -0.015em;
+}
+
+/* Precision Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #050507;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Precision UI Utilities */
+.studio-surface {
+  background-color: #0b0c10;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.studio-elevated {
+  background-color: #12141c;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.studio-hairline {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.vmake-reveal-layer {
+  clip-path: polygon(var(--clip-split, 50%) 0%, 100% 0%, 100% 100%, var(--clip-split, 50%) 100%);
+}
