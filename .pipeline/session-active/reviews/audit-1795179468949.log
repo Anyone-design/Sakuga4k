@@ -1,0 +1,3 @@
+[TEST AUDIT] Step: 19
+Command: Test-Path .pipeline/session-active/reviews
+Timestamp: 2026-11-20T12:57:48.949Z
