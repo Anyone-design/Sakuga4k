@@ -12,6 +12,13 @@ interface ProgressVisualizerProps {
   onCancel: () => void;
 }
 
+const PRESET_DISPLAY: Record<string, string> = {
+  animevideov3: "Fast Video v3 • Action & AMVs",
+  animesharp: "AnimeSharp 4x • Close-ups & Stills",
+  realcugan_pop: "Real-CUGAN Pro • Vmake Killer + Pop",
+  anime6b: "Anime 6B • Retro Classic",
+};
+
 export function ProgressVisualizer({
   clip,
   batchIndex,
@@ -80,7 +87,7 @@ export function ProgressVisualizer({
 
       {/* Bottom Control Bar */}
       <div className="flex items-center justify-between text-xs text-zinc-500 border-t border-white/[0.06] pt-3">
-        <span>Fast Video v3 • Temporal Lossless</span>
+        <span className="font-medium text-zinc-300">{PRESET_DISPLAY[clip.modelPreset] || clip.modelPreset}</span>
         <button
           type="button"
           onClick={onCancel}

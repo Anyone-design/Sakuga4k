@@ -150,9 +150,21 @@ export function ComparisonSlider({
           )}
 
           <a
-            href={clip.downloadUrl || "#"}
+            href={clip.downloadUrl && !clip.downloadUrl.startsWith("#") ? clip.downloadUrl : undefined}
             download={clip.name.replace(/\.[^/.]+$/, "_4K.mp4")}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-tight shadow-xl transition-all"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => {
+              if (!clip.downloadUrl || clip.downloadUrl.startsWith("#")) {
+                e.preventDefault();
+                alert("Processing output file is not ready yet.");
+              }
+            }}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold tracking-tight shadow-xl transition-all ${
+              !clip.downloadUrl || clip.downloadUrl.startsWith("#")
+                ? "bg-white/[0.08] text-zinc-500 cursor-not-allowed"
+                : "bg-white hover:bg-zinc-200 text-black cursor-pointer"
+            }`}
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download 4K (.MP4)</span>

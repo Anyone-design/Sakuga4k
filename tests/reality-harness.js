@@ -184,9 +184,9 @@ async function runVector3_NetworkChaos() {
     }
   });
 
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => server.listen(0, 'localhost', resolve));
   const port = server.address().port;
-  const baseUrl = `http://127.0.0.1:${port}`;
+  const baseUrl = `http://localhost:${port}`;
 
   try {
     // 3.1 Live Healthy Handshake

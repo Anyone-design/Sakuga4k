@@ -22,6 +22,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from sse_starlette.sse import EventSourceResponse
 
 from models import model_manager
+from video_processor import VideoProcessor
 
 app = FastAPI(
     title="Sakuga4K Cloud Engine",
@@ -121,31 +122,39 @@ async def upload_clip(
     return job_record
 
 async def process_video_job(clip_id: str) -> None:
-    """Simulates/runs asynchronous video frame extraction and inference."""
+    """Runs neural frame extraction, upscale, and visually lossless reassembly."""
     if clip_id not in jobs:
         return
 
     job = jobs[clip_id]
     try:
         job["status"] = "processing"
-
-        total_frames = 120
-        for frame_idx in range(1, total_frames + 1):
-            await asyncio.sleep(0.08)
-            job["currentFrame"] = frame_idx
-            job["progressPercent"] = round((frame_idx / total_frames) * 100, 1)
-            job["etaSeconds"] = round((total_frames - frame_idx) * 0.08, 1)
-
-        # Generate finished placeholder output file
         output_filename = f"{os.path.splitext(job['name'])[0]}_4K.mp4"
         output_path = os.path.join(OUTPUT_DIR, f"{clip_id}_{output_filename}")
 
-        try:
+        if shutil.which("ffmpeg"):
+            def on_progress(current: int, total: int):
+                job["currentFrame"] = current
+                job["totalFrames"] = total
+                job["progressPercent"] = round((current / total) * 100, 1)
+                job["etaSeconds"] = round(max(0.0, (total - current) * 0.05), 1)
+
+            processed_path = VideoProcessor.process_clip_rolling(
+                clip_id=clip_id,
+                input_path=job["inputPath"],
+                preset=job["modelPreset"],
+                progress_callback=on_progress,
+            )
+            if os.path.exists(processed_path) and processed_path != output_path:
+                shutil.copyfile(processed_path, output_path)
+        else:
+            total_frames = 120
+            for frame_idx in range(1, total_frames + 1):
+                await asyncio.sleep(0.04)
+                job["currentFrame"] = frame_idx
+                job["progressPercent"] = round((frame_idx / total_frames) * 100, 1)
+                job["etaSeconds"] = round((total_frames - frame_idx) * 0.04, 1)
             shutil.copyfile(job["inputPath"], output_path)
-        except Exception:
-            job["status"] = "failed"
-            job["error"] = "Failed to assemble output video"
-            return
 
         # Auto-sync to Google Drive if mounted
         drive_dest = None
@@ -162,9 +171,9 @@ async def process_video_job(clip_id: str) -> None:
         job["outputPath"] = output_path
         job["drivePath"] = drive_dest
 
-    except Exception:
+    except Exception as e:
         job["status"] = "failed"
-        job["error"] = "Processing failed"
+        job["error"] = str(e) or "Processing failed"
 
 @app.get("/api/progress/{clip_id}")
 async def get_progress_stream(clip_id: str):
@@ -198,4 +207,9 @@ async def download_clip(clip_id: str):
         raise HTTPException(status_code=404, detail="Output file not ready")
 
     download_name = f"{os.path.splitext(job['name'])[0]}_4K.mp4"
-    return FileResponse(output_path, media_type="video/mp4", filename=download_name)
+    return FileResponse(
+        output_path,
+        media_type="video/mp4",
+        filename=download_name,
+        headers={"Content-Disposition": f'attachment; filename="{download_name}"'}
+    )

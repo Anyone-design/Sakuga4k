@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AlertCircle } from "lucide-react";
 import { Dropzone } from "@/components/Dropzone";
 import { QueueList } from "@/components/QueueList";
 import { PresetSelector } from "@/components/PresetSelector";
@@ -16,30 +17,41 @@ export default function StudioPage() {
   const [activeClipId, setActiveClipId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<ModelPreset>("animevideov3");
   const [flowState, setFlowState] = useState<"drop" | "progress" | "complete">("drop");
-  const simTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Clear timer on unmount
+  // Store raw browser File objects for real HTTP multipart upload
+  const fileMapRef = useRef<Map<string, File>>(new Map());
+  const activeEventSourceRef = useRef<EventSource | null>(null);
+
+  // Clean up active SSE on unmount
   useEffect(() => {
     return () => {
-      if (simTimerRef.current) clearInterval(simTimerRef.current);
+      if (activeEventSourceRef.current) {
+        activeEventSourceRef.current.close();
+      }
     };
   }, []);
 
   const handleFilesAdded = useCallback(
     (files: File[]) => {
-      const newClips: VideoClip[] = files.map((file) => ({
-        id: crypto.randomUUID(),
-        name: file.name,
-        sizeBytes: file.size,
-        originalResolution: "1920x1080",
-        targetResolution: "3840x2160",
-        modelPreset: selectedPreset,
-        status: "queued",
-        progressPercent: 0,
-        currentFrame: 0,
-        totalFrames: 120,
-        etaSeconds: 15,
-      }));
+      setErrorMessage(null);
+      const newClips: VideoClip[] = files.map((file) => {
+        const id = crypto.randomUUID();
+        fileMapRef.current.set(id, file);
+        return {
+          id,
+          name: file.name,
+          sizeBytes: file.size,
+          originalResolution: "1920x1080",
+          targetResolution: "3840x2160",
+          modelPreset: selectedPreset,
+          status: "queued",
+          progressPercent: 0,
+          currentFrame: 0,
+          totalFrames: 120,
+          etaSeconds: 15,
+        };
+      });
 
       setClips((prev) => [...prev, ...newClips]);
       if (!activeClipId && newClips.length > 0) {
@@ -49,67 +61,185 @@ export default function StudioPage() {
     [activeClipId, selectedPreset]
   );
 
+  const handleSelectPreset = useCallback((preset: ModelPreset) => {
+    setSelectedPreset(preset);
+    // Dynamically update preset for all currently queued clips
+    setClips((prev) =>
+      prev.map((c) => (c.status === "queued" ? { ...c, modelPreset: preset } : c))
+    );
+  }, []);
+
   const handleRemoveClip = useCallback((id: string) => {
+    fileMapRef.current.delete(id);
     setClips((prev) => prev.filter((c) => c.id !== id));
     setActiveClipId((curr) => (curr === id ? null : curr));
   }, []);
 
   const handleClearQueue = useCallback(() => {
-    if (simTimerRef.current) clearInterval(simTimerRef.current);
+    if (activeEventSourceRef.current) {
+      activeEventSourceRef.current.close();
+      activeEventSourceRef.current = null;
+    }
+    fileMapRef.current.clear();
     setClips([]);
     setActiveClipId(null);
+    setErrorMessage(null);
     setFlowState("drop");
   }, []);
 
-  // Start Batch Upscale Processing
-  const handleStartUpscale = () => {
+  // Real Multi-Clip Pipeline execution via Cloudflare Tunnel
+  const handleStartUpscale = async () => {
     if (clips.length === 0) return;
-    setFlowState("progress");
+    setErrorMessage(null);
 
-    // Read stored tunnel URL
+    // 1. Validate Tunnel Endpoint
     let tunnelUrl = "";
     try {
-      tunnelUrl = localStorage.getItem(STORAGE_KEY) || "";
+      tunnelUrl = (localStorage.getItem(STORAGE_KEY) || "").trim().replace(/\/+$/, "");
     } catch (err: unknown) {
       console.warn("[Sakuga4K] Failed to read tunnel URL:", err);
     }
 
-    const firstQueued = clips.find((c) => c.status === "queued") || clips[0];
-    setActiveClipId(firstQueued.id);
+    if (!tunnelUrl) {
+      setErrorMessage(
+        "Colab GPU is not connected. Please click 'Connect Colab' in the top header, paste your Cloudflare tunnel link, and then start upscaling."
+      );
+      return;
+    }
 
-    // If tunnel is present, upload can connect to live Colab backend;
-    // Otherwise, execute smooth simulation loop so user can test the UI animations immediately!
-    let frame = 0;
-    const total = 120;
+    const queuedClips = clips.filter((c) => c.status === "queued" || c.status === "processing");
+    if (queuedClips.length === 0) return;
 
-    if (simTimerRef.current) clearInterval(simTimerRef.current);
-    simTimerRef.current = setInterval(() => {
-      frame += 2;
-      const pct = Math.min(100, Math.round((frame / total) * 100));
-      const remainingSecs = Math.max(0, (total - frame) * 0.12);
+    setFlowState("progress");
+
+    // 2. Process Clips Sequentially
+    for (const clip of queuedClips) {
+      setActiveClipId(clip.id);
+      const rawFile = fileMapRef.current.get(clip.id);
+
+      if (!rawFile) {
+        setClips((prev) =>
+          prev.map((c) =>
+            c.id === clip.id
+              ? { ...c, status: "failed", error: "File handle expired. Please re-drop the clip." }
+              : c
+          )
+        );
+        continue;
+      }
 
       setClips((prev) =>
-        prev.map((c) =>
-          c.id === firstQueued.id
-            ? {
-                ...c,
-                status: pct >= 100 ? "completed" : "processing",
-                progressPercent: pct,
-                currentFrame: frame,
-                totalFrames: total,
-                etaSeconds: remainingSecs,
-                downloadUrl: pct >= 100 ? "#download" : undefined,
-                drivePath: pct >= 100 ? "MyDrive/Anime_4K_Output/" + c.name : undefined,
-              }
-            : c
-        )
+        prev.map((c) => (c.id === clip.id ? { ...c, status: "processing", progressPercent: 1 } : c))
       );
 
-      if (frame >= total) {
-        if (simTimerRef.current) clearInterval(simTimerRef.current);
-        setFlowState("complete");
+      try {
+        // Upload clip to Colab backend
+        const formData = new FormData();
+        formData.append("file", rawFile);
+        formData.append("preset", clip.modelPreset);
+
+        const uploadRes = await fetch(`${tunnelUrl}/api/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error(`Upload rejected by Colab with HTTP ${uploadRes.status}`);
+        }
+
+        const jobData = await uploadRes.json();
+        const backendJobId = jobData.id;
+
+        // Stream real-time inference telemetry via SSE
+        await new Promise<void>((resolve, reject) => {
+          const es = new EventSource(`${tunnelUrl}/api/progress/${backendJobId}`);
+          activeEventSourceRef.current = es;
+
+          es.addEventListener("progress", (event) => {
+            try {
+              const progressData = JSON.parse(event.data);
+              const isDone = progressData.status === "completed";
+              const isFailed = progressData.status === "failed";
+
+              setClips((prev) =>
+                prev.map((c) =>
+                  c.id === clip.id
+                    ? {
+                        ...c,
+                        status: isDone ? "completed" : isFailed ? "failed" : "processing",
+                        progressPercent: progressData.progressPercent ?? c.progressPercent,
+                        currentFrame: progressData.currentFrame ?? c.currentFrame,
+                        totalFrames: progressData.totalFrames ?? c.totalFrames,
+                        etaSeconds: progressData.etaSeconds ?? c.etaSeconds,
+                        downloadUrl: isDone ? `${tunnelUrl}/api/download/${backendJobId}` : undefined,
+                        drivePath: progressData.drivePath,
+                        error: progressData.error,
+                      }
+                    : c
+                )
+              );
+
+              if (isDone) {
+                es.close();
+                activeEventSourceRef.current = null;
+                resolve();
+              } else if (isFailed) {
+                es.close();
+                activeEventSourceRef.current = null;
+                reject(new Error(progressData.error || "Inference failed on Colab"));
+              }
+            } catch (parseErr) {
+              console.error("Telemetry parse error:", parseErr);
+            }
+          });
+
+          es.onerror = () => {
+            es.close();
+            activeEventSourceRef.current = null;
+            // Fallback verification probe
+            fetch(`${tunnelUrl}/api/progress/${backendJobId}`)
+              .then((r) => r.json())
+              .then((statusPayload) => {
+                if (statusPayload.status === "completed") {
+                  setClips((prev) =>
+                    prev.map((c) =>
+                      c.id === clip.id
+                        ? {
+                            ...c,
+                            status: "completed",
+                            progressPercent: 100,
+                            downloadUrl: `${tunnelUrl}/api/download/${backendJobId}`,
+                            drivePath: statusPayload.drivePath,
+                          }
+                        : c
+                    )
+                  );
+                  resolve();
+                } else {
+                  reject(new Error("Connection to Colab tunnel lost during inference"));
+                }
+              })
+              .catch(() => reject(new Error("Lost connection to Colab tunnel")));
+          };
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Processing failed";
+        setClips((prev) =>
+          prev.map((c) => (c.id === clip.id ? { ...c, status: "failed", error: msg } : c))
+        );
+        setErrorMessage(`Processing error for ${clip.name}: ${msg}`);
       }
-    }, 100);
+    }
+
+    setFlowState("complete");
+  };
+
+  const handleCancelSession = () => {
+    if (activeEventSourceRef.current) {
+      activeEventSourceRef.current.close();
+      activeEventSourceRef.current = null;
+    }
+    setFlowState("drop");
   };
 
   const activeClip = clips.find((c) => c.id === activeClipId) || clips[0];
@@ -134,6 +264,17 @@ export default function StudioPage() {
 
       {/* Main Interactive Stage Frame */}
       <div className="my-auto space-y-6">
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-medium"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>{errorMessage}</span>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
           {flowState === "drop" && (
             <motion.div
@@ -148,7 +289,7 @@ export default function StudioPage() {
               
               <PresetSelector
                 selected={selectedPreset}
-                onSelect={setSelectedPreset}
+                onSelect={handleSelectPreset}
               />
 
               {clips.length > 0 && (
@@ -186,10 +327,7 @@ export default function StudioPage() {
                 clip={activeClip}
                 batchIndex={Math.max(0, activeIndex)}
                 totalBatchClips={clips.length}
-                onCancel={() => {
-                  if (simTimerRef.current) clearInterval(simTimerRef.current);
-                  setFlowState("drop");
-                }}
+                onCancel={handleCancelSession}
               />
 
               <QueueList
@@ -215,8 +353,10 @@ export default function StudioPage() {
               <ComparisonSlider
                 clip={activeClip}
                 onUpscaleNewBatch={() => {
+                  fileMapRef.current.clear();
                   setClips([]);
                   setActiveClipId(null);
+                  setErrorMessage(null);
                   setFlowState("drop");
                 }}
                 totalCompletedClips={clips.filter((c) => c.status === "completed").length}
