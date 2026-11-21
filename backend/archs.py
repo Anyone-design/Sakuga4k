@@ -24,28 +24,27 @@ class SRVGGNetCompact(nn.Module):
         self.body = nn.ModuleList()
         # First convolution
         self.body.append(nn.Conv2d(num_in_ch, num_feat, 3, 1, 1))
+        # First activation
         if act_type == 'relu':
-            activation = nn.ReLU(inplace=True)
+            self.body.append(nn.ReLU(inplace=True))
         elif act_type == 'prelu':
-            activation = nn.PReLU(num_parameters=num_feat)
+            self.body.append(nn.PReLU(num_parameters=num_feat))
         elif act_type == 'leakyrelu':
-            activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+            self.body.append(nn.LeakyReLU(negative_slope=0.1, inplace=True))
         else:
-            activation = nn.PReLU(num_parameters=num_feat)
-        self.body.append(activation)
+            self.body.append(nn.PReLU(num_parameters=num_feat))
 
-        # Body convolutions
+        # Body convolutions and activations
         for _ in range(num_conv):
             self.body.append(nn.Conv2d(num_feat, num_feat, 3, 1, 1))
             if act_type == 'relu':
-                activation = nn.ReLU(inplace=True)
+                self.body.append(nn.ReLU(inplace=True))
             elif act_type == 'prelu':
-                activation = nn.PReLU(num_parameters=num_feat)
+                self.body.append(nn.PReLU(num_parameters=num_feat))
             elif act_type == 'leakyrelu':
-                activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+                self.body.append(nn.LeakyReLU(negative_slope=0.1, inplace=True))
             else:
-                activation = nn.PReLU(num_parameters=num_feat)
-            self.body.append(activation)
+                self.body.append(nn.PReLU(num_parameters=num_feat))
 
         # Output convolution and pixel shuffle
         self.body.append(nn.Conv2d(num_feat, num_out_ch * upscale * upscale, 3, 1, 1))
@@ -56,7 +55,7 @@ class SRVGGNetCompact(nn.Module):
         for layer in self.body:
             out = layer(out)
         out = self.upsampler(out)
-        base = F.interpolate(x, scale_factor=float(self.upscale), mode='bilinear', align_corners=False)
+        base = F.interpolate(x, scale_factor=float(self.upscale), mode='nearest')
         return out + base
 
 

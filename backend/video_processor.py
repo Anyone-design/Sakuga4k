@@ -5,6 +5,7 @@ Extracts frames, executes rolling neural upscale, purges raw frames, and reassem
 
 import os
 import sys
+import time
 import shutil
 import subprocess
 from typing import Callable, Optional
@@ -127,6 +128,7 @@ class VideoProcessor:
             frame_files = sorted([f for f in os.listdir(clip_frames_dir) if f.startswith("frame_") and f.endswith(".png")])
             for idx, frame_file in enumerate(frame_files, start=1):
                 frame_path = os.path.join(clip_frames_dir, frame_file)
+                t0 = time.time()
                 try:
                     img_bgr = cv2.imread(frame_path, cv2.IMREAD_COLOR)
                     if img_bgr is not None:
@@ -138,13 +140,26 @@ class VideoProcessor:
                         out_tensor = model_manager.upscale_tensor(img_tensor, preset=preset)
 
                         # Convert back to uint8 BGR
-                        out_np = (out_tensor.squeeze(0).permute(1, 2, 0).numpy() * 255.0).astype(np.uint8)
+                        out_np = (out_tensor.squeeze(0).permute(1, 2, 0).numpy() * 255.0).clip(0, 255).astype(np.uint8)
                         out_bgr = cv2.cvtColor(out_np, cv2.COLOR_RGB2BGR)
+
+                        # Enforce Native 4K UHD (3840x2160) format
+                        h, w = out_bgr.shape[:2]
+                        if h > 2160 or w > 3840:
+                            # Downscale 8K/5K neural output to 4K using Area anti-aliasing (SSAA effect)
+                            out_bgr = cv2.resize(out_bgr, (3840, 2160), interpolation=cv2.INTER_AREA)
+                        elif h < 2160 or w < 3840:
+                            out_bgr = cv2.resize(out_bgr, (3840, 2160), interpolation=cv2.INTER_LANCZOS4)
 
                         # Overwrite original frame with razor-sharp 4K frame
                         cv2.imwrite(frame_path, out_bgr)
+
+                        latency_ms = int((time.time() - t0) * 1000)
+                        vram_mb = torch.cuda.memory_allocated(0) // (1024 * 1024) if torch.cuda.is_available() else 0
+                        if idx == 1 or idx % 10 == 0 or idx == total_frames:
+                            print(f"[Sakuga4K GPU] Frame {idx}/{total_frames} | {preset} | 4K UHD (3840x2160) | VRAM: {vram_mb} MB | Latency: {latency_ms}ms", flush=True)
                 except Exception as frame_err:
-                    print(f"[Sakuga4K] Frame {idx} inference fallback: {frame_err}")
+                    print(f"[Sakuga4K ERROR] Frame {idx} inference exception: {frame_err}", flush=True)
 
                 if progress_callback:
                     progress_callback(idx, total_frames)

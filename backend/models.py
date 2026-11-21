@@ -131,6 +131,41 @@ class AnimeUpscaleModelManager:
         self.active_preset = preset
         return model
 
+    def _tile_upscale(self, model: nn.Module, img: torch.Tensor, tile_size: int = 512, tile_pad: int = 16) -> torch.Tensor:
+        """Tiled tensor inference to eliminate CUDA Out of Memory on large frames."""
+        batch, channel, height, width = img.shape
+        scale = getattr(model, "scale", getattr(model, "upscale", 4))
+        output_height = height * scale
+        output_width = width * scale
+        output = torch.zeros((batch, channel, output_height, output_width), dtype=img.dtype, device=img.device)
+
+        tiles_x = (width + tile_size - 1) // tile_size
+        tiles_y = (height + tile_size - 1) // tile_size
+
+        for yi in range(tiles_y):
+            for xi in range(tiles_x):
+                x1 = xi * tile_size
+                x2 = min(x1 + tile_size, width)
+                y1 = yi * tile_size
+                y2 = min(y1 + tile_size, height)
+
+                pad_x1 = max(0, x1 - tile_pad)
+                pad_x2 = min(width, x2 + tile_pad)
+                pad_y1 = max(0, y1 - tile_pad)
+                pad_y2 = min(height, y2 + tile_pad)
+
+                tile_in = img[:, :, pad_y1:pad_y2, pad_x1:pad_x2]
+                tile_out = model(tile_in)
+
+                out_x1 = (x1 - pad_x1) * scale
+                out_x2 = out_x1 + (x2 - x1) * scale
+                out_y1 = (y1 - pad_y1) * scale
+                out_y2 = out_y1 + (y2 - y1) * scale
+
+                output[:, :, y1*scale:y2*scale, x1*scale:x2*scale] = tile_out[:, :, out_y1:out_y2, out_x1:out_x2]
+
+        return output
+
     def upscale_tensor(self, img_tensor: torch.Tensor, preset: str = "animevideov3") -> torch.Tensor:
         """
         Runs neural inference on an RGB image tensor [1, 3, H, W] in range [0, 1].
@@ -142,7 +177,13 @@ class AnimeUpscaleModelManager:
                 img_tensor = img_tensor.half()
             img_tensor = img_tensor.to(DEVICE)
 
-            output = model(img_tensor)
+            try:
+                output = model(img_tensor)
+            except torch.cuda.OutOfMemoryError:
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                print("[Sakuga4K GPU] Direct inference VRAM limit reached - switching to tiled tensor processing...")
+                output = self._tile_upscale(model, img_tensor, tile_size=512, tile_pad=16)
 
             output = output.float().clamp(0.0, 1.0)
             return output.cpu()
