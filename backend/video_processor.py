@@ -93,6 +93,9 @@ class VideoProcessor:
             "-crf", str(DEFAULT_CRF),
             "-preset", FFMPEG_PRESET,
             "-pix_fmt", PIX_FMT,
+            "-profile:v", "high",
+            "-level", "4.2",
+            "-movflags", "+faststart",
             "-c:a", "copy",
             "-shortest",
             output_path,
@@ -124,8 +127,23 @@ class VideoProcessor:
             if total_frames == 0:
                 raise RuntimeError("No frames extracted from input video")
 
+            # Determine dynamic target dimensions while strictly preserving aspect ratio
+            first_frame_path = os.path.join(clip_frames_dir, frame_files[0])
+            sample_img = cv2.imread(first_frame_path)
+            if sample_img is not None:
+                orig_h, orig_w = sample_img.shape[:2]
+                if orig_h > orig_w:
+                    target_h = 3840
+                    target_w = int(round(orig_w * 3840 / orig_h))
+                else:
+                    target_w = 3840
+                    target_h = int(round(orig_h * 3840 / orig_w))
+                target_w = target_w - (target_w % 2)
+                target_h = target_h - (target_h % 2)
+            else:
+                target_w, target_h = 3840, 2160
+
             # Real GPU Neural Upscaling: Upscale each frame in FP16 on Tensor Cores
-            frame_files = sorted([f for f in os.listdir(clip_frames_dir) if f.startswith("frame_") and f.endswith(".png")])
             for idx, frame_file in enumerate(frame_files, start=1):
                 frame_path = os.path.join(clip_frames_dir, frame_file)
                 t0 = time.time()
@@ -143,21 +161,19 @@ class VideoProcessor:
                         out_np = (out_tensor.squeeze(0).permute(1, 2, 0).numpy() * 255.0).clip(0, 255).astype(np.uint8)
                         out_bgr = cv2.cvtColor(out_np, cv2.COLOR_RGB2BGR)
 
-                        # Enforce Native 4K UHD (3840x2160) format
-                        h, w = out_bgr.shape[:2]
-                        if h > 2160 or w > 3840:
-                            # Downscale 8K/5K neural output to 4K using Area anti-aliasing (SSAA effect)
-                            out_bgr = cv2.resize(out_bgr, (3840, 2160), interpolation=cv2.INTER_AREA)
-                        elif h < 2160 or w < 3840:
-                            out_bgr = cv2.resize(out_bgr, (3840, 2160), interpolation=cv2.INTER_LANCZOS4)
+                        # Enforce target dimensions with exact aspect ratio preservation
+                        cur_h, cur_w = out_bgr.shape[:2]
+                        if cur_h != target_h or cur_w != target_w:
+                            interp = cv2.INTER_AREA if (cur_h > target_h and cur_w > target_w) else cv2.INTER_LANCZOS4
+                            out_bgr = cv2.resize(out_bgr, (target_w, target_h), interpolation=interp)
 
-                        # Overwrite original frame with razor-sharp 4K frame
+                        # Overwrite original frame with razor-sharp frame
                         cv2.imwrite(frame_path, out_bgr)
 
                         latency_ms = int((time.time() - t0) * 1000)
                         vram_mb = torch.cuda.memory_allocated(0) // (1024 * 1024) if torch.cuda.is_available() else 0
                         if idx == 1 or idx % 10 == 0 or idx == total_frames:
-                            print(f"[Sakuga4K GPU] Frame {idx}/{total_frames} | {preset} | 4K UHD (3840x2160) | VRAM: {vram_mb} MB | Latency: {latency_ms}ms", flush=True)
+                            print(f"[Sakuga4K GPU] Frame {idx}/{total_frames} | {preset} | {target_w}x{target_h} | VRAM: {vram_mb} MB | Latency: {latency_ms}ms", flush=True)
                 except Exception as frame_err:
                     print(f"[Sakuga4K ERROR] Frame {idx} inference exception: {frame_err}", flush=True)
 
