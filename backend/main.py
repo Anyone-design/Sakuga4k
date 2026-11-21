@@ -139,11 +139,12 @@ async def process_video_job(clip_id: str) -> None:
                 job["progressPercent"] = round((current / total) * 100, 1)
                 job["etaSeconds"] = round(max(0.0, (total - current) * 0.05), 1)
 
-            processed_path = VideoProcessor.process_clip_rolling(
-                clip_id=clip_id,
-                input_path=job["inputPath"],
-                preset=job["modelPreset"],
-                progress_callback=on_progress,
+            processed_path = await asyncio.to_thread(
+                VideoProcessor.process_clip_rolling,
+                clip_id,
+                job["inputPath"],
+                job["modelPreset"],
+                on_progress,
             )
             if os.path.exists(processed_path) and processed_path != output_path:
                 shutil.copyfile(processed_path, output_path)

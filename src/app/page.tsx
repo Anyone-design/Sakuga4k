@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import { Dropzone } from "@/components/Dropzone";
 import { QueueList } from "@/components/QueueList";
@@ -275,103 +275,122 @@ export default function StudioPage() {
           </motion.div>
         )}
 
-        <AnimatePresence mode="wait">
-          {flowState === "drop" && (
-            <motion.div
-              key="stage-drop"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-6"
-            >
-              <Dropzone onFilesAdded={handleFilesAdded} />
-              
-              <PresetSelector
-                selected={selectedPreset}
-                onSelect={handleSelectPreset}
-              />
+        {flowState === "drop" && (
+          <motion.div
+            key="stage-drop"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="space-y-6"
+          >
+            <Dropzone onFilesAdded={handleFilesAdded} />
+            
+            <PresetSelector
+              selected={selectedPreset}
+              onSelect={handleSelectPreset}
+            />
 
-              {clips.length > 0 && (
-                <div className="space-y-4 pt-2">
-                  <QueueList
-                    clips={clips}
-                    onRemoveClip={handleRemoveClip}
-                    onClearQueue={handleClearQueue}
-                  />
+            {clips.length > 0 && (
+              <div className="space-y-4 pt-2">
+                <QueueList
+                  clips={clips}
+                  onRemoveClip={handleRemoveClip}
+                  onClearQueue={handleClearQueue}
+                />
 
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={handleStartUpscale}
-                    className="w-full py-3.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-tight shadow-2xl transition-all"
-                  >
-                    Start 4K Upscale ({clips.length} {clips.length === 1 ? "Clip" : "Clips"})
-                  </motion.button>
-                </div>
-              )}
-            </motion.div>
-          )}
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  onClick={handleStartUpscale}
+                  className="w-full py-3.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-tight shadow-2xl transition-all cursor-pointer"
+                >
+                  Start 4K Upscale ({clips.length} {clips.length === 1 ? "Clip" : "Clips"})
+                </motion.button>
+              </div>
+            )}
+          </motion.div>
+        )}
 
-          {flowState === "progress" && activeClip && (
-            <motion.div
-              key="stage-progress"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-6"
-            >
-              <ProgressVisualizer
-                clip={activeClip}
-                batchIndex={Math.max(0, activeIndex)}
-                totalBatchClips={clips.length}
-                onCancel={handleCancelSession}
-              />
+        {flowState === "progress" && (
+          <motion.div
+            key="stage-progress"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="space-y-6"
+          >
+            <ProgressVisualizer
+              clip={activeClip || clips[0] || {
+                id: "active",
+                name: "Processing Footage...",
+                sizeBytes: 0,
+                originalResolution: "1920x1080",
+                targetResolution: "3840x2160",
+                modelPreset: selectedPreset,
+                status: "processing",
+                progressPercent: 5,
+                currentFrame: 1,
+                totalFrames: 120,
+                etaSeconds: 10,
+              }}
+              batchIndex={Math.max(0, activeIndex)}
+              totalBatchClips={Math.max(1, clips.length)}
+              onCancel={handleCancelSession}
+            />
 
-              <QueueList
-                clips={clips}
-                onRemoveClip={handleRemoveClip}
-                onClearQueue={handleClearQueue}
-                onSelectClip={setActiveClipId}
-                selectedClipId={activeClipId || undefined}
-                isProcessing={true}
-              />
-            </motion.div>
-          )}
+            <QueueList
+              clips={clips}
+              onRemoveClip={handleRemoveClip}
+              onClearQueue={handleClearQueue}
+              onSelectClip={setActiveClipId}
+              selectedClipId={activeClipId || undefined}
+              isProcessing={true}
+            />
+          </motion.div>
+        )}
 
-          {flowState === "complete" && activeClip && (
-            <motion.div
-              key="stage-complete"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-6"
-            >
-              <ComparisonSlider
-                clip={activeClip}
-                onUpscaleNewBatch={() => {
-                  fileMapRef.current.clear();
-                  setClips([]);
-                  setActiveClipId(null);
-                  setErrorMessage(null);
-                  setFlowState("drop");
-                }}
-                totalCompletedClips={clips.filter((c) => c.status === "completed").length}
-              />
+        {flowState === "complete" && (
+          <motion.div
+            key="stage-complete"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="space-y-6"
+          >
+            <ComparisonSlider
+              clip={activeClip || clips[0] || {
+                id: "active",
+                name: "4K_Render.mp4",
+                sizeBytes: 0,
+                originalResolution: "1920x1080",
+                targetResolution: "3840x2160",
+                modelPreset: selectedPreset,
+                status: "completed",
+                progressPercent: 100,
+                currentFrame: 120,
+                totalFrames: 120,
+                etaSeconds: 0,
+              }}
+              onUpscaleNewBatch={() => {
+                fileMapRef.current.clear();
+                setClips([]);
+                setActiveClipId(null);
+                setErrorMessage(null);
+                setFlowState("drop");
+              }}
+              totalCompletedClips={Math.max(1, clips.filter((c) => c.status === "completed").length)}
+            />
 
-              <QueueList
-                clips={clips}
-                onRemoveClip={handleRemoveClip}
-                onClearQueue={handleClearQueue}
-                onSelectClip={setActiveClipId}
-                selectedClipId={activeClipId || undefined}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <QueueList
+              clips={clips}
+              onRemoveClip={handleRemoveClip}
+              onClearQueue={handleClearQueue}
+              onSelectClip={setActiveClipId}
+              selectedClipId={activeClipId || undefined}
+            />
+          </motion.div>
+        )}
       </div>
 
       <div className="pt-8" />
