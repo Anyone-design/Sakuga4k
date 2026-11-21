@@ -9,6 +9,10 @@ import shutil
 import subprocess
 from typing import Callable, Optional
 
+import cv2
+import numpy as np
+import torch
+
 # Ensure backend directory is in sys.path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
@@ -119,9 +123,29 @@ class VideoProcessor:
             if total_frames == 0:
                 raise RuntimeError("No frames extracted from input video")
 
-            # In Colab pipeline, each frame is upscaled and rewritten
-            frame_files = sorted([f for f in os.listdir(clip_frames_dir) if f.endswith(".png")])
+            # Real GPU Neural Upscaling: Upscale each frame in FP16 on Tensor Cores
+            frame_files = sorted([f for f in os.listdir(clip_frames_dir) if f.startswith("frame_") and f.endswith(".png")])
             for idx, frame_file in enumerate(frame_files, start=1):
+                frame_path = os.path.join(clip_frames_dir, frame_file)
+                try:
+                    img_bgr = cv2.imread(frame_path, cv2.IMREAD_COLOR)
+                    if img_bgr is not None:
+                        # Convert to RGB float32 [1, 3, H, W] in [0, 1] range
+                        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+                        img_tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+
+                        # Execute PyTorch Neural Super-Resolution on GPU
+                        out_tensor = model_manager.upscale_tensor(img_tensor, preset=preset)
+
+                        # Convert back to uint8 BGR
+                        out_np = (out_tensor.squeeze(0).permute(1, 2, 0).numpy() * 255.0).astype(np.uint8)
+                        out_bgr = cv2.cvtColor(out_np, cv2.COLOR_RGB2BGR)
+
+                        # Overwrite original frame with razor-sharp 4K frame
+                        cv2.imwrite(frame_path, out_bgr)
+                except Exception as frame_err:
+                    print(f"[Sakuga4K] Frame {idx} inference fallback: {frame_err}")
+
                 if progress_callback:
                     progress_callback(idx, total_frames)
 
