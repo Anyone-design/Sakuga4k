@@ -110,12 +110,13 @@ class VideoProcessor:
         input_path: str,
         preset: str = "animevideov3",
         progress_callback: Optional[Callable[[int, int], None]] = None,
+        target_res: str = "2k",
     ) -> str:
         """
         Executes rolling frame upscale:
         1. Extract frames
         2. Process frame-by-frame
-        3. Reassemble 4K video (with optional pop filter)
+        3. Reassemble 2K/4K video (with optional pop filter)
         4. Rolling cleanup invariant: purges extracted frames directory to prevent disk exhaustion
         """
         clip_frames_dir = os.path.join(FRAMES_DIR, clip_id)
@@ -127,21 +128,26 @@ class VideoProcessor:
             if total_frames == 0:
                 raise RuntimeError("No frames extracted from input video")
 
+            frame_files = sorted([f for f in os.listdir(clip_frames_dir) if f.startswith("frame_") and f.endswith(".png")])
+            if not frame_files:
+                raise RuntimeError("No extracted frame files found")
+
             # Determine dynamic target dimensions while strictly preserving aspect ratio
             first_frame_path = os.path.join(clip_frames_dir, frame_files[0])
             sample_img = cv2.imread(first_frame_path)
+            max_dim = 2560 if target_res == "2k" else 3840
             if sample_img is not None:
                 orig_h, orig_w = sample_img.shape[:2]
                 if orig_h > orig_w:
-                    target_h = 3840
-                    target_w = int(round(orig_w * 3840 / orig_h))
+                    target_h = max_dim
+                    target_w = int(round(orig_w * max_dim / orig_h))
                 else:
-                    target_w = 3840
-                    target_h = int(round(orig_h * 3840 / orig_w))
+                    target_w = max_dim
+                    target_h = int(round(orig_h * max_dim / orig_w))
                 target_w = target_w - (target_w % 2)
                 target_h = target_h - (target_h % 2)
             else:
-                target_w, target_h = 3840, 2160
+                target_w, target_h = (2560, 1440) if target_res == "2k" else (3840, 2160)
 
             # Real GPU Neural Upscaling: Upscale each frame in FP16 on Tensor Cores
             for idx, frame_file in enumerate(frame_files, start=1):

@@ -7,6 +7,8 @@ import os
 import sys
 import uuid
 import json
+import time
+import zipfile
 import asyncio
 import shutil
 from typing import Dict, Any, Optional
@@ -72,6 +74,7 @@ async def upload_clip(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     preset: str = Form("animevideov3"),
+    resolution: str = Form("2k"),
 ) -> Dict[str, Any]:
     """Endpoint matching contracts.json uploadClip schema."""
     if not file.filename:
@@ -95,6 +98,7 @@ async def upload_clip(
         raise HTTPException(status_code=500, detail="Failed to save uploaded file")
 
     file_size = os.path.getsize(input_path)
+    res_label = "2K QHD (1440p)" if resolution.lower() == "2k" else "4K UHD (2160p)"
 
     # Initialize job state
     job_record = {
@@ -102,9 +106,10 @@ async def upload_clip(
         "name": safe_filename,
         "sizeBytes": file_size,
         "durationSeconds": 5.0,
-        "originalResolution": "1920x1080",
-        "targetResolution": "3840x2160",
+        "originalResolution": "Auto",
+        "targetResolution": res_label,
         "modelPreset": preset,
+        "resolution": resolution.lower(),
         "status": "queued",
         "progressPercent": 0,
         "currentFrame": 0,
@@ -129,7 +134,8 @@ async def process_video_job(clip_id: str) -> None:
     job = jobs[clip_id]
     try:
         job["status"] = "processing"
-        output_filename = f"{os.path.splitext(job['name'])[0]}_4K.mp4"
+        res_suffix = "2K" if job.get("resolution") == "2k" else "4K"
+        output_filename = f"{os.path.splitext(job['name'])[0]}_{res_suffix}.mp4"
         output_path = os.path.join(OUTPUT_DIR, f"{clip_id}_{output_filename}")
 
         if shutil.which("ffmpeg"):
@@ -145,6 +151,7 @@ async def process_video_job(clip_id: str) -> None:
                 job["inputPath"],
                 job["modelPreset"],
                 on_progress,
+                job.get("resolution", "2k"),
             )
             if os.path.exists(processed_path) and processed_path != output_path:
                 shutil.copyfile(processed_path, output_path)
@@ -159,12 +166,15 @@ async def process_video_job(clip_id: str) -> None:
 
         # Auto-sync to Google Drive if mounted
         drive_dest = None
+        drive_dir = "/content/drive/MyDrive/Sakuga4K_Upscaled"
         if os.path.exists("/content/drive/MyDrive"):
             try:
-                os.makedirs(DRIVE_OUTPUT_DIR, exist_ok=True)
-                drive_dest = os.path.join(DRIVE_OUTPUT_DIR, output_filename)
+                os.makedirs(drive_dir, exist_ok=True)
+                drive_dest = os.path.join(drive_dir, output_filename)
                 shutil.copyfile(output_path, drive_dest)
-            except Exception:
+                print(f"[Sakuga4K Drive] Synced {output_filename} -> {drive_dest}", flush=True)
+            except Exception as drive_err:
+                print(f"[Sakuga4K Drive] Sync failed: {drive_err}", flush=True)
                 job["driveError"] = "Drive sync failed"
 
         job["status"] = "completed"
@@ -198,7 +208,7 @@ async def get_progress_stream(clip_id: str):
 
 @app.get("/api/download/{clip_id}")
 async def download_clip(clip_id: str):
-    """Streams the completed 4K MP4 file."""
+    """Streams the completed MP4 file with strict attachment headers."""
     if clip_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -207,10 +217,34 @@ async def download_clip(clip_id: str):
     if not output_path or not os.path.exists(output_path):
         raise HTTPException(status_code=404, detail="Output file not ready")
 
-    download_name = f"{os.path.splitext(job['name'])[0]}_4K.mp4"
+    res_suffix = "2K" if job.get("resolution") == "2k" else "4K"
+    download_name = f"{os.path.splitext(job['name'])[0]}_{res_suffix}.mp4"
     return FileResponse(
         output_path,
         media_type="video/mp4",
         filename=download_name,
         headers={"Content-Disposition": f'attachment; filename="{download_name}"'}
+    )
+
+@app.get("/api/download-zip")
+async def download_batch_zip():
+    """Bundles all completed clips into a single zip archive for 1-click batch download."""
+    completed_jobs = [j for j in jobs.values() if j.get("status") == "completed" and j.get("outputPath") and os.path.exists(j["outputPath"])]
+    if not completed_jobs:
+        raise HTTPException(status_code=404, detail="No completed clips available to bundle")
+
+    zip_filename = f"Sakuga4K_Batch_{int(time.time())}.zip"
+    zip_path = os.path.join(OUTPUT_DIR, zip_filename)
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for j in completed_jobs:
+            res_suffix = "2K" if j.get("resolution") == "2k" else "4K"
+            arcname = f"{os.path.splitext(j['name'])[0]}_{res_suffix}.mp4"
+            zipf.write(j["outputPath"], arcname=arcname)
+
+    return FileResponse(
+        zip_path,
+        media_type="application/zip",
+        filename=zip_filename,
+        headers={"Content-Disposition": f'attachment; filename="{zip_filename}"'}
     )

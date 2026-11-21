@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Download, FolderArchive, RefreshCw, CheckCircle2, Film, HardDrive } from "lucide-react";
 import { Dropzone } from "@/components/Dropzone";
 import { QueueList } from "@/components/QueueList";
 import { PresetSelector } from "@/components/PresetSelector";
 import { ProgressVisualizer } from "@/components/ProgressVisualizer";
-import { ComparisonSlider } from "@/components/ComparisonSlider";
 import type { VideoClip, ModelPreset } from "@/types/contracts";
 
 const STORAGE_KEY = "sakuga4k_tunnel_url";
@@ -16,6 +15,7 @@ export default function StudioPage() {
   const [clips, setClips] = useState<VideoClip[]>([]);
   const [activeClipId, setActiveClipId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<ModelPreset>("animevideov3");
+  const [selectedResolution, setSelectedResolution] = useState<"2k" | "4k">("2k");
   const [flowState, setFlowState] = useState<"drop" | "progress" | "complete">("drop");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -42,8 +42,8 @@ export default function StudioPage() {
           id,
           name: file.name,
           sizeBytes: file.size,
-          originalResolution: "1920x1080",
-          targetResolution: "3840x2160",
+          originalResolution: "Auto",
+          targetResolution: selectedResolution === "2k" ? "2560x1440 (2K)" : "3840x2160 (4K)",
           modelPreset: selectedPreset,
           status: "queued",
           progressPercent: 0,
@@ -58,7 +58,7 @@ export default function StudioPage() {
         setActiveClipId(newClips[0].id);
       }
     },
-    [activeClipId, selectedPreset]
+    [activeClipId, selectedPreset, selectedResolution]
   );
 
   const handleSelectPreset = useCallback((preset: ModelPreset) => {
@@ -137,6 +137,7 @@ export default function StudioPage() {
         const formData = new FormData();
         formData.append("file", rawFile);
         formData.append("preset", clip.modelPreset);
+        formData.append("resolution", selectedResolution);
 
         const uploadRes = await fetch(`${tunnelUrl}/api/upload`, {
           method: "POST",
@@ -242,6 +243,14 @@ export default function StudioPage() {
     setFlowState("drop");
   };
 
+  const getTunnelUrl = () => {
+    try {
+      return (localStorage.getItem(STORAGE_KEY) || "").trim().replace(/\/+$/, "");
+    } catch {
+      return "";
+    }
+  };
+
   const activeClip = clips.find((c) => c.id === activeClipId) || clips[0];
   const activeIndex = clips.findIndex((c) => c.id === activeClipId);
 
@@ -285,6 +294,38 @@ export default function StudioPage() {
           >
             <Dropzone onFilesAdded={handleFilesAdded} />
             
+            {/* Target Resolution Toggle */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-white/[0.08] bg-[#0c0d12]">
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-white tracking-tight">Export Resolution</span>
+                <p className="text-[11px] text-zinc-400">2K plays smoothly on all mobile devices; 4K is desktop UHD.</p>
+              </div>
+              <div className="flex items-center gap-1 p-1 rounded-lg bg-black/40 border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedResolution("2k")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-tight transition-all cursor-pointer ${
+                    selectedResolution === "2k"
+                      ? "bg-white text-black shadow-md"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  2K • Mobile (1440p)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedResolution("4k")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-tight transition-all cursor-pointer ${
+                    selectedResolution === "4k"
+                      ? "bg-white text-black shadow-md"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  4K • Desktop (2160p)
+                </button>
+              </div>
+            </div>
+
             <PresetSelector
               selected={selectedPreset}
               onSelect={handleSelectPreset}
@@ -305,7 +346,7 @@ export default function StudioPage() {
                   onClick={handleStartUpscale}
                   className="w-full py-3.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-tight shadow-2xl transition-all cursor-pointer"
                 >
-                  Start 4K Upscale ({clips.length} {clips.length === 1 ? "Clip" : "Clips"})
+                  Start Upscale ({clips.length} {clips.length === 1 ? "Clip" : "Clips"} • {selectedResolution.toUpperCase()})
                 </motion.button>
               </div>
             )}
@@ -358,37 +399,96 @@ export default function StudioPage() {
             transition={{ duration: 0.25, ease: "easeOut" }}
             className="space-y-6"
           >
-            <ComparisonSlider
-              clip={activeClip || clips[0] || {
-                id: "active",
-                name: "4K_Render.mp4",
-                sizeBytes: 0,
-                originalResolution: "1920x1080",
-                targetResolution: "3840x2160",
-                modelPreset: selectedPreset,
-                status: "completed",
-                progressPercent: 100,
-                currentFrame: 120,
-                totalFrames: 120,
-                etaSeconds: 0,
-              }}
-              onUpscaleNewBatch={() => {
-                fileMapRef.current.clear();
-                setClips([]);
-                setActiveClipId(null);
-                setErrorMessage(null);
-                setFlowState("drop");
-              }}
-              totalCompletedClips={Math.max(1, clips.filter((c) => c.status === "completed").length)}
-            />
+            {/* Batch Status Card */}
+            <div className="relative w-full rounded-2xl p-6 sm:p-8 border border-emerald-500/20 bg-[#070d0a]/90 shadow-2xl backdrop-blur-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Neural Upscale Complete</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                    {clips.filter((c) => c.status === "completed").length} {clips.filter((c) => c.status === "completed").length === 1 ? "Clip" : "Clips"} Ready in {selectedResolution.toUpperCase()}
+                  </h2>
+                  <p className="text-xs text-zinc-400">
+                    Visually lossless CRF 16 • Native aspect ratio preserved • Universal mobile playback enabled
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 pt-1">
+                    <HardDrive className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Synced to Google Drive: <code className="text-zinc-300">My Drive &gt; Sakuga4K_Upscaled</code></span>
+                  </div>
+                </div>
 
-            <QueueList
-              clips={clips}
-              onRemoveClip={handleRemoveClip}
-              onClearQueue={handleClearQueue}
-              onSelectClip={setActiveClipId}
-              selectedClipId={activeClipId || undefined}
-            />
+                <div className="flex flex-wrap sm:flex-col items-stretch gap-2.5 shrink-0">
+                  <a
+                    href={`${getTunnelUrl()}/api/download-zip`}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-tight shadow-xl transition-all cursor-pointer"
+                  >
+                    <FolderArchive className="w-4 h-4" />
+                    <span>Download All (ZIP)</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fileMapRef.current.clear();
+                      setClips([]);
+                      setActiveClipId(null);
+                      setErrorMessage(null);
+                      setFlowState("drop");
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-zinc-300 text-xs font-medium transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Upscale New Batch</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Individual Completed Clips Cards */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold tracking-tight text-zinc-400 uppercase">
+                Completed Footage ({clips.filter((c) => c.status === "completed").length})
+              </h3>
+              {clips.map((clip) => (
+                <div
+                  key={clip.id}
+                  className="flex items-center justify-between p-4 rounded-xl border border-white/[0.08] bg-[#0c0d12] shadow-lg hover:border-white/[0.15] transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0 pr-4">
+                    <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                      <Film className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="text-xs font-bold text-white tracking-tight truncate max-w-[200px] sm:max-w-md">
+                        {clip.name}
+                      </p>
+                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                        <span className="font-semibold text-indigo-400">
+                          {selectedResolution.toUpperCase()}
+                        </span>
+                        <span>•</span>
+                        <span>{(clip.sizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
+                        <span>•</span>
+                        <span className="text-emerald-400 font-medium">Ready</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {clip.downloadUrl && (
+                    <a
+                      href={clip.downloadUrl}
+                      download
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white text-zinc-200 hover:text-black border border-white/10 text-xs font-semibold tracking-tight transition-all cursor-pointer shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
       </div>
