@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Zap, Wand2, History, Check, ArrowRight } from "lucide-react";
+import { X, Aperture, Film, Focus, Layers, Check, ArrowRight } from "lucide-react";
 import type { ModelPreset } from "@/types/contracts";
 
 interface ModelGuideModalProps {
@@ -33,7 +34,7 @@ const MODEL_DETAILS: ModelDetail[] = [
     bestFor: "AMV edits, TikToks, Instagram Reels, and modern shonen fight cuts (e.g. Jujutsu Kaisen, Demon Slayer, Chainsaw Man).",
     visualCharacter: "Aggressive sub-pixel line restoration combined with an adaptive unsharp pop filter. Delivers high contrast, punchy contours, and deep, vivid color saturation that pops on OLED mobile displays.",
     speed: "~50 ms / frame (Fast)",
-    icon: Wand2,
+    icon: Aperture,
     accentColor: "from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400",
   },
   {
@@ -44,7 +45,7 @@ const MODEL_DETAILS: ModelDetail[] = [
     bestFor: "Rapid camera sweeps, high-speed sword fights, flying debris, and intense sakuga animation.",
     visualCharacter: "Specially trained on consecutive anime video frames for temporal consistency. Eliminates frame-to-frame edge flickering and ghosting without artificial sharpening halos. Produces smooth, cinematic 2K/4K motion.",
     speed: "~40 ms / frame (Fastest)",
-    icon: Zap,
+    icon: Film,
     accentColor: "from-indigo-500/20 to-blue-500/10 border-indigo-500/30 text-indigo-400",
   },
   {
@@ -55,7 +56,7 @@ const MODEL_DETAILS: ModelDetail[] = [
     bestFor: "Character close-ups, emotional dialogue scenes, eyes, eyelashes, hair strands, and aesthetic wallpaper captures.",
     visualCharacter: "Deep 6-block residual dense network focusing strictly on sub-pixel edge sharpness. Reconstructs fine black line art with razor-thin surgical precision while preserving delicate gradient shading.",
     speed: "~95 ms / frame (Deeper Network)",
-    icon: Sparkles,
+    icon: Focus,
     accentColor: "from-purple-500/20 to-pink-500/10 border-purple-500/30 text-purple-400",
   },
   {
@@ -66,7 +67,7 @@ const MODEL_DETAILS: ModelDetail[] = [
     bestFor: "Vintage 90s/2000s anime (e.g. Classic Naruto, Bleach, Evangelion, Dragon Ball Z) or blurry 480p/720p clips downloaded from social media.",
     visualCharacter: "Deep perceptual de-noiser and artifact eraser. Erases blocky video compression squares and JPEG grain while preserving traditional cel-animation watercolor backgrounds without plastic smoothing.",
     speed: "~95 ms / frame (Deeper Network)",
-    icon: History,
+    icon: Layers,
     accentColor: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400",
   },
 ];
@@ -77,6 +78,12 @@ export function ModelGuideModal({
   selectedPreset,
   onSelectPreset,
 }: ModelGuideModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,10 +95,12 @@ export function ModelGuideModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end">
+        <div className="fixed inset-0 z-[100] flex items-center justify-end">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -99,7 +108,7 @@ export function ModelGuideModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-pointer"
+            className="absolute inset-0 bg-black/75 backdrop-blur-md cursor-pointer"
           />
 
           {/* Slide-over Drawer */}
@@ -111,15 +120,20 @@ export function ModelGuideModal({
             className="relative w-full max-w-lg h-full bg-[#08090d] border-l border-white/[0.08] shadow-2xl flex flex-col z-10 overflow-hidden"
           >
             {/* Header */}
-            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between bg-[#0b0c10]">
-              <div>
-                <h2 className="text-base font-bold text-white tracking-tight">Models Guide</h2>
-                <p className="text-xs text-zinc-400">Choose the ideal neural model for your animation cut</p>
+            <div className="shrink-0 px-6 py-5 border-b border-white/[0.1] flex items-center justify-between bg-[#0e1017]">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-white tracking-tight">Models Guide</h2>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 font-semibold border border-indigo-500/25">
+                    4 Neural Engines
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400">Choose the ideal PyTorch architecture for your animation cut</p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/5"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -210,7 +224,7 @@ export function ModelGuideModal({
             </div>
 
             {/* Footer Tip */}
-            <div className="p-4 border-t border-white/[0.08] bg-[#0b0c10] text-[11px] text-zinc-500 flex items-center justify-between">
+            <div className="shrink-0 p-4 border-t border-white/[0.08] bg-[#0b0c10] text-[11px] text-zinc-500 flex items-center justify-between">
               <span>All models execute on PyTorch FP16 Tensor Cores</span>
               <button
                 type="button"
@@ -223,6 +237,7 @@ export function ModelGuideModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

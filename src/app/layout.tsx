@@ -34,7 +34,7 @@ export default function RootLayout({
         <Header />
 
         {/* Studio Content Viewport */}
-        <div className="relative z-10 flex-1 flex flex-col">
+        <div className="relative flex-1 flex flex-col">
           {children}
         </div>
 

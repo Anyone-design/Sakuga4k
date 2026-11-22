@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Zap, Sparkles, Wand2, History, BookOpen } from "lucide-react";
+import { Aperture, Film, Focus, Layers, BookOpen } from "lucide-react";
 import type { ModelPreset } from "@/types/contracts";
 
 interface PresetSelectorProps {
@@ -24,25 +24,25 @@ const PRESETS: PresetOption[] = [
     id: "realcugan_pop",
     name: "Real-CUGAN Pro",
     tag: "Vmake Killer",
-    icon: Wand2,
+    icon: Aperture,
   },
   {
     id: "animevideov3",
     name: "AnimeVideo-v3",
     tag: "Fast Motion",
-    icon: Zap,
+    icon: Film,
   },
   {
     id: "animesharp",
     name: "AnimeSharp 4x",
     tag: "Close-ups",
-    icon: Sparkles,
+    icon: Focus,
   },
   {
     id: "anime6b",
     name: "Anime 6B",
     tag: "Classic / Denoise",
-    icon: History,
+    icon: Layers,
   },
 ];
 
