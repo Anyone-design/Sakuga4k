@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Radio, ExternalLink, Settings2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Radio, ExternalLink, Settings2, CheckCircle2, AlertCircle, RefreshCw, BookOpen } from "lucide-react";
 import type { HealthStatus } from "@/types/contracts";
 
 const STORAGE_KEY = "sakuga4k_tunnel_url";
@@ -98,8 +98,24 @@ export function Header() {
           </div>
         </div>
 
-        {/* Live Tunnel Status Pill */}
+        {/* Actions & Live Tunnel Status Pill */}
         <div className="flex items-center gap-2">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("open-model-guide"));
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Models</span>
+          </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

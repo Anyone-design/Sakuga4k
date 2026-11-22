@@ -82,6 +82,8 @@ class VideoProcessor:
             "-framerate", str(fps),
             "-i", frame_pattern,
             "-i", audio_source_path,
+            "-map", "0:v:0",
+            "-map", "1:a:0?",
         ]
 
         # Apply Vmake-killer adaptive pop filter if requested
@@ -94,9 +96,11 @@ class VideoProcessor:
             "-preset", FFMPEG_PRESET,
             "-pix_fmt", PIX_FMT,
             "-profile:v", "high",
-            "-level", "4.2",
             "-movflags", "+faststart",
-            "-c:a", "copy",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-ar", "48000",
+            "-ac", "2",
             "-shortest",
             output_path,
         ])

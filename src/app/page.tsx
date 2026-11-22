@@ -7,6 +7,7 @@ import { Dropzone } from "@/components/Dropzone";
 import { QueueList } from "@/components/QueueList";
 import { PresetSelector } from "@/components/PresetSelector";
 import { ProgressVisualizer } from "@/components/ProgressVisualizer";
+import { ModelGuideModal } from "@/components/ModelGuideModal";
 import type { VideoClip, ModelPreset } from "@/types/contracts";
 
 const STORAGE_KEY = "sakuga4k_tunnel_url";
@@ -16,12 +17,20 @@ export default function StudioPage() {
   const [activeClipId, setActiveClipId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<ModelPreset>("animevideov3");
   const [selectedResolution, setSelectedResolution] = useState<"2k" | "4k">("2k");
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [flowState, setFlowState] = useState<"drop" | "progress" | "complete">("drop");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Store raw browser File objects for real HTTP multipart upload
   const fileMapRef = useRef<Map<string, File>>(new Map());
   const activeEventSourceRef = useRef<EventSource | null>(null);
+
+  // Listen for global open-model-guide events (from Header or shortcuts)
+  useEffect(() => {
+    const handleOpen = () => setIsGuideOpen(true);
+    window.addEventListener("open-model-guide", handleOpen);
+    return () => window.removeEventListener("open-model-guide", handleOpen);
+  }, []);
 
   // Clean up active SSE on unmount
   useEffect(() => {
@@ -329,6 +338,7 @@ export default function StudioPage() {
             <PresetSelector
               selected={selectedPreset}
               onSelect={handleSelectPreset}
+              onOpenGuide={() => setIsGuideOpen(true)}
             />
 
             {clips.length > 0 && (
@@ -492,6 +502,13 @@ export default function StudioPage() {
           </motion.div>
         )}
       </div>
+
+      <ModelGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        selectedPreset={selectedPreset}
+        onSelectPreset={handleSelectPreset}
+      />
 
       <div className="pt-8" />
     </main>
