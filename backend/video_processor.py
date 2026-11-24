@@ -136,18 +136,34 @@ class VideoProcessor:
             if not frame_files:
                 raise RuntimeError("No extracted frame files found")
 
-            # Determine dynamic target dimensions while strictly preserving aspect ratio
+            # Standard Broadcast Bounding Box (Vmake Standard: 1440p baseline for 2K, 2160p baseline for 4K)
+            short_dim = 1440 if target_res == "2k" else 2160
+            long_cap = 2560 if target_res == "2k" else 3840
+
             first_frame_path = os.path.join(clip_frames_dir, frame_files[0])
             sample_img = cv2.imread(first_frame_path)
-            max_dim = 2560 if target_res == "2k" else 3840
+
             if sample_img is not None:
                 orig_h, orig_w = sample_img.shape[:2]
-                if orig_h > orig_w:
-                    target_h = max_dim
-                    target_w = int(round(orig_w * max_dim / orig_h))
+                if orig_w == orig_h:
+                    # 1:1 Square (Instagram, AMV square cuts)
+                    target_w = short_dim
+                    target_h = short_dim
+                elif orig_w > orig_h:
+                    # Landscape (16:9, 4:3, 21:9)
+                    target_h = short_dim
+                    target_w = int(round(orig_w * short_dim / orig_h))
+                    if target_w > long_cap:
+                        target_w = long_cap
+                        target_h = int(round(orig_h * long_cap / orig_w))
                 else:
-                    target_w = max_dim
-                    target_h = int(round(orig_h * max_dim / orig_w))
+                    # Portrait / Vertical (9:16 Reels/TikTok, 4:5 Instagram)
+                    target_w = short_dim
+                    target_h = int(round(orig_h * short_dim / orig_w))
+                    if target_h > long_cap:
+                        target_h = long_cap
+                        target_w = int(round(orig_w * long_cap / orig_h))
+
                 target_w = target_w - (target_w % 2)
                 target_h = target_h - (target_h % 2)
             else:
