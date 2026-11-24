@@ -35,3 +35,7 @@ next-env.d.ts
 
 # Test footage reproduction
 Error 24-11-26/
+
+# Pipeline transient logs
+.pipeline/**/*.log
+.pipeline/session-active/
