@@ -83,16 +83,16 @@ export function Header() {
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       className="sticky top-0 z-50 w-full border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl"
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-6 h-14 flex items-center justify-between gap-2">
 
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-md bg-white text-black font-extrabold flex items-center justify-center text-[10px] tracking-tight">
+        <div className="flex items-center gap-2 min-w-0 shrink-0">
+          <div className="w-6 h-6 rounded-md bg-white text-black font-extrabold flex items-center justify-center text-[10px] tracking-tight shrink-0">
             4K
           </div>
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-baseline gap-1.5 min-w-0">
             <span className="text-sm font-bold tracking-tight text-white">Sakuga4K</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded text-zinc-400 bg-white/[0.06] font-medium border border-white/[0.08]">
+            <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.2 rounded text-zinc-400 bg-white/[0.06] font-medium border border-white/[0.08]">
               STUDIO
             </span>
             <span className="text-[10px] px-1.5 py-0.2 rounded text-indigo-300 bg-indigo-500/15 font-semibold border border-indigo-500/25 tracking-tight">
@@ -102,7 +102,7 @@ export function Header() {
         </div>
 
         {/* Actions & Live Tunnel Status Pill */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <motion.button
             type="button"
             whileHover={{ scale: 1.02 }}
@@ -113,9 +113,9 @@ export function Header() {
                 window.dispatchEvent(new CustomEvent("open-model-guide"));
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors cursor-pointer shrink-0"
           >
-            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <BookOpen className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <span>Models</span>
           </motion.button>
 
@@ -124,12 +124,12 @@ export function Header() {
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setIsOpen((prev) => !prev)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors ${isOnline
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors min-w-0 max-w-[155px] sm:max-w-none ${isOnline
                 ? "bg-emerald-500/[0.08] border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/[0.14]"
                 : "bg-white/[0.04] border-white/[0.1] text-zinc-400 hover:text-white hover:bg-white/[0.08]"
               }`}
           >
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-2 w-2 shrink-0">
               {isOnline && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               )}
@@ -138,10 +138,10 @@ export function Header() {
                   }`}
               />
             </span>
-            <span className="font-semibold text-zinc-200">
+            <span className="font-semibold text-zinc-200 truncate">
               {isOnline ? health?.gpuModel ?? "Colab GPU" : "Connect Colab"}
             </span>
-            <Settings2 className="w-3.5 h-3.5 text-zinc-400" />
+            <Settings2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
           </motion.button>
         </div>
 
@@ -182,18 +182,18 @@ export function Header() {
                   placeholder="https://xyz-random-name.trycloudflare.com"
                   value={tunnelUrl}
                   onChange={(e) => setTunnelUrl(e.target.value)}
-                  className="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors"
+                  className="min-w-0 flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 transition-colors"
+                  className="px-4 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 transition-colors shrink-0"
                 >
                   Save
                 </button>
               </form>
 
               {/* Status readout */}
-              <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400 pt-1">
                 <div className="flex items-center gap-1.5">
                   {isOnline ? (
                     <>
