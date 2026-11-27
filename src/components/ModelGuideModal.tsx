@@ -32,8 +32,8 @@ const MODEL_DETAILS: ModelDetail[] = [
     identityName: "Vibrant Pop",
     tag: "AMV & Reels",
     bestFor: "AMV edits, TikToks, Instagram Reels, and modern shonen fight cuts (e.g. Jujutsu Kaisen, Demon Slayer, Chainsaw Man).",
-    visualCharacter: "Aggressive sub-pixel line restoration combined with an adaptive unsharp pop filter. Delivers high contrast, punchy contours, and deep, vivid color saturation that pops on OLED mobile displays.",
-    speed: "~50 ms / frame (Fast)",
+    visualCharacter: "Sub-pixel neural line restoration backed by our unified Medium Pop contour pass. Delivers punchy black ink contours, vivid OLED colors, and crisp framing.",
+    speed: "Turbo Auto-Batch (Fast)",
     icon: Aperture,
     accentColor: "from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400",
   },
@@ -43,8 +43,8 @@ const MODEL_DETAILS: ModelDetail[] = [
     identityName: "Sakuga Action",
     tag: "Fast Motion",
     bestFor: "Rapid camera sweeps, high-speed sword fights, flying debris, and intense sakuga animation.",
-    visualCharacter: "Specially trained on consecutive anime video frames for temporal consistency. Eliminates frame-to-frame edge flickering and ghosting without artificial sharpening halos. Produces smooth, cinematic 2K/4K motion.",
-    speed: "~40 ms / frame (Fastest)",
+    visualCharacter: "Trained on consecutive animation frames for temporal consistency without edge flickering or ghosting, paired with universal Medium Pop line clarity.",
+    speed: "Turbo Auto-Batch (Fastest)",
     icon: Film,
     accentColor: "from-indigo-500/20 to-blue-500/10 border-indigo-500/30 text-indigo-400",
   },
@@ -54,8 +54,8 @@ const MODEL_DETAILS: ModelDetail[] = [
     identityName: "Eye & Line Precision",
     tag: "Close-Ups & Stills",
     bestFor: "Character close-ups, emotional dialogue scenes, eyes, eyelashes, hair strands, and aesthetic wallpaper captures.",
-    visualCharacter: "Deep 6-block residual dense network focusing strictly on sub-pixel edge sharpness. Reconstructs fine black line art with razor-thin surgical precision while preserving delicate gradient shading.",
-    speed: "~95 ms / frame (Deeper Network)",
+    visualCharacter: "Deep 6-block residual dense network focusing on sub-pixel edge precision. Reconstructs fine black line-art and shading with balanced Medium Pop crispness.",
+    speed: "Turbo Auto-Batch (Deeper Network)",
     icon: Focus,
     accentColor: "from-purple-500/20 to-pink-500/10 border-purple-500/30 text-purple-400",
   },
@@ -65,8 +65,8 @@ const MODEL_DETAILS: ModelDetail[] = [
     identityName: "Retro Revive",
     tag: "Classic & Low-Res",
     bestFor: "Vintage 90s/2000s anime (e.g. Classic Naruto, Bleach, Evangelion, Dragon Ball Z) or blurry 480p/720p clips downloaded from social media.",
-    visualCharacter: "Deep perceptual de-noiser and artifact eraser. Erases blocky video compression squares and JPEG grain while preserving traditional cel-animation watercolor backgrounds without plastic smoothing.",
-    speed: "~95 ms / frame (Deeper Network)",
+    visualCharacter: "Deep perceptual de-noiser and artifact eraser. Clears blocky compression squares and film grain before applying crisp Medium Pop line clarity.",
+    speed: "Turbo Auto-Batch (Deeper Network)",
     icon: Layers,
     accentColor: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400",
   },
@@ -133,7 +133,7 @@ export function ModelGuideModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/5"
+                className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors cursor-pointer border border-white/5"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -199,7 +199,7 @@ export function ModelGuideModal({
                           onSelectPreset(model.id);
                           onClose();
                         }}
-                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-tight transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-tight focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer ${
                           isSelected
                             ? "bg-indigo-500 text-white shadow-lg"
                             : "bg-white/[0.06] hover:bg-white text-zinc-300 hover:text-black border border-white/10"
@@ -225,11 +225,11 @@ export function ModelGuideModal({
 
             {/* Footer Tip */}
             <div className="shrink-0 p-4 border-t border-white/[0.08] bg-[#0b0c10] text-[11px] text-zinc-500 flex items-center justify-between">
-              <span>All models execute on PyTorch FP16 Tensor Cores</span>
+              <span>Auto-Batched FP16 Tensor Cores • Medium Pop clarity included</span>
               <button
                 type="button"
                 onClick={onClose}
-                className="text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
+                className="text-indigo-400 hover:text-indigo-300 font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 rounded px-1 cursor-pointer"
               >
                 Close Guide
               </button>
