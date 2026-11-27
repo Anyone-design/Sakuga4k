@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "projectName": "Sakuga4K",
   "entities": {
     "HealthStatus": {
@@ -12,7 +12,8 @@
         "vramTotalMB": { "type": "number" },
         "vramFreeMB": { "type": "number" },
         "activePreset": { "type": "string" },
-        "driveMounted": { "type": "boolean" }
+        "driveMounted": { "type": "boolean" },
+        "engineVersion": { "type": "string", "default": "1.1.0" }
       }
     },
     "VideoClip": {
@@ -24,15 +25,24 @@
         "sizeBytes": { "type": "integer" },
         "durationSeconds": { "type": "number" },
         "originalResolution": { "type": "string", "default": "1920x1080" },
-        "targetResolution": { "type": "string", "default": "3840x2160" },
+        "targetResolution": { "type": "string", "default": "2560x1440" },
+        "actualOutputResolution": { "type": "string" },
         "modelPreset": { "type": "string", "enum": ["animevideov3", "animesharp", "realcugan_pop", "anime6b"] },
-        "status": { "type": "string", "enum": ["queued", "uploading", "processing", "completed", "failed"] },
+        "status": { "type": "string", "enum": ["queued", "uploading", "processing", "completed", "failed", "cancelled"] },
+        "stage": {
+          "type": "string",
+          "enum": ["queued", "extracting", "probing", "upscaling", "reassembling", "syncing", "completed", "failed", "cancelled"]
+        },
         "progressPercent": { "type": "number", "minimum": 0, "maximum": 100 },
         "currentFrame": { "type": "integer" },
         "totalFrames": { "type": "integer" },
         "etaSeconds": { "type": "number" },
+        "activeBatchSize": { "type": "integer" },
+        "throughputFps": { "type": "number" },
+        "vramUsedMB": { "type": "number" },
         "downloadUrl": { "type": "string" },
         "drivePath": { "type": "string" },
+        "driveError": { "type": "string" },
         "error": { "type": "string" }
       }
     },
@@ -63,7 +73,8 @@
           "vramTotalMB": 15360,
           "vramFreeMB": 14200,
           "activePreset": "realesr-animevideov3",
-          "driveMounted": true
+          "driveMounted": true,
+          "engineVersion": "1.1.0"
         }
       ]
     },
@@ -76,7 +87,8 @@
         "required": ["file"],
         "properties": {
           "file": { "type": "string", "format": "binary" },
-          "preset": { "type": "string", "enum": ["animevideov3", "animesharp", "realcugan_pop", "anime6b"], "default": "animevideov3" }
+          "preset": { "type": "string", "enum": ["animevideov3", "animesharp", "realcugan_pop", "anime6b"], "default": "animevideov3" },
+          "resolution": { "type": "string", "enum": ["2k", "4k"], "default": "2k" }
         }
       },
       "responses": {
@@ -90,15 +102,20 @@
           "sizeBytes": 14500000,
           "durationSeconds": 5.0,
           "originalResolution": "1920x1080",
-          "targetResolution": "3840x2160",
+          "targetResolution": "2560x1440",
+          "actualOutputResolution": "2560x1440",
           "modelPreset": "animevideov3",
           "status": "queued",
+          "stage": "queued",
           "progressPercent": 0,
           "currentFrame": 0,
           "totalFrames": 120,
           "etaSeconds": 24.0,
+          "activeBatchSize": 3,
+          "throughputFps": 5.8,
+          "vramUsedMB": 7400,
           "downloadUrl": "/api/download/e9a7e6b2-1c23-4d56-8e7f-0987654321ab",
-          "drivePath": "MyDrive/Anime_4K_Output/gojo_hollow_purple_4k.mp4"
+          "drivePath": "MyDrive/Sakuga4K_Upscaled/gojo_hollow_purple_2K.mp4"
         }
       ]
     },
@@ -111,6 +128,17 @@
       ],
       "responses": {
         "200": { "type": "string", "description": "text/event-stream SSE events with VideoClip payload" }
+      }
+    },
+    {
+      "name": "cancelClip",
+      "method": "POST",
+      "path": "/api/cancel/{id}",
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ],
+      "responses": {
+        "200": { "type": "object", "properties": { "id": { "type": "string" }, "status": { "type": "string" } } }
       }
     },
     {

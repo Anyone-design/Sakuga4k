@@ -1,6 +1,6 @@
 /**
  * Sakuga4K System Contracts & Data Entities
- * Frozen contract matching contracts.json (v1.0.0)
+ * Contract matching contracts.json (v1.1.0)
  */
 
 export type HealthState = "online" | "degraded" | "busy" | "offline";
@@ -12,10 +12,21 @@ export interface HealthStatus {
   vramFreeMB: number;
   activePreset: string;
   driveMounted: boolean;
+  engineVersion?: string;
 }
 
 export type ModelPreset = "animevideov3" | "animesharp" | "realcugan_pop" | "anime6b";
-export type ClipStatus = "queued" | "uploading" | "processing" | "completed" | "failed";
+export type ClipStatus = "queued" | "uploading" | "processing" | "completed" | "failed" | "cancelled";
+export type ProcessingStage =
+  | "queued"
+  | "extracting"
+  | "probing"
+  | "upscaling"
+  | "reassembling"
+  | "syncing"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface VideoClip {
   id: string;
@@ -24,14 +35,20 @@ export interface VideoClip {
   durationSeconds?: number;
   originalResolution: string;
   targetResolution: string;
+  actualOutputResolution?: string;
   modelPreset: ModelPreset;
   status: ClipStatus;
+  stage?: ProcessingStage;
   progressPercent: number;
   currentFrame: number;
   totalFrames: number;
   etaSeconds: number;
+  activeBatchSize?: number;
+  throughputFps?: number;
+  vramUsedMB?: number;
   downloadUrl?: string;
   drivePath?: string;
+  driveError?: string;
   error?: string;
 }
 
