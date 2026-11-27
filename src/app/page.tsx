@@ -463,7 +463,7 @@ export default function StudioPage() {
   const anyDriveError = completedClips.some((c) => Boolean(c.driveError));
 
   return (
-    <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-between">
+    <main className="flex-1 max-w-4xl w-full min-w-0 mx-auto px-4 sm:px-6 py-6 sm:py-12 flex flex-col justify-between">
       {/* Hero Headline */}
       <div className="space-y-2 text-center pb-6">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
@@ -505,16 +505,16 @@ export default function StudioPage() {
             <Dropzone onFilesAdded={handleFilesAdded} />
 
             {/* Target Resolution Toggle */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-white/[0.08] bg-[#0c0d12]">
-              <div className="space-y-0.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border border-white/[0.08] bg-[#0c0d12]">
+              <div className="space-y-0.5 min-w-0">
                 <span className="text-xs font-bold text-white tracking-tight">Export Resolution</span>
                 <p className="text-[11px] text-zinc-400">2K plays smoothly on all mobile devices; 4K is desktop UHD.</p>
               </div>
-              <div className="flex items-center gap-1 p-1 rounded-lg bg-black/40 border border-white/5">
+              <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-lg bg-black/40 border border-white/5 shrink-0 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => handleSelectResolution("2k")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-tight focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-bold tracking-tight text-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer ${
                     selectedResolution === "2k"
                       ? "bg-white text-black shadow-md"
                       : "text-zinc-400 hover:text-white"
@@ -525,7 +525,7 @@ export default function StudioPage() {
                 <button
                   type="button"
                   onClick={() => handleSelectResolution("4k")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-tight focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-bold tracking-tight text-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer ${
                     selectedResolution === "4k"
                       ? "bg-white text-black shadow-md"
                       : "text-zinc-400 hover:text-white"
@@ -699,17 +699,17 @@ export default function StudioPage() {
               {clips.map((clip) => (
                 <div
                   key={clip.id}
-                  className="flex items-center justify-between p-4 rounded-xl border border-white/[0.08] bg-[#0c0d12] shadow-lg hover:border-white/[0.15] transition-all"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-white/[0.08] bg-[#0c0d12] shadow-lg hover:border-white/[0.15] transition-all"
                 >
-                  <div className="flex items-center gap-3 min-w-0 pr-4">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
                       <Film className="w-4 h-4" />
                     </div>
-                    <div className="min-w-0 space-y-0.5">
-                      <p className="text-xs font-bold text-white tracking-tight truncate max-w-[200px] sm:max-w-md">
+                    <div className="min-w-0 space-y-0.5 flex-1">
+                      <p className="text-xs font-bold text-white tracking-tight truncate">
                         {clip.name}
                       </p>
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500">
                         <span className="font-semibold text-indigo-400">
                           {clip.actualOutputResolution || selectedResolution.toUpperCase()}
                         </span>
@@ -737,7 +737,7 @@ export default function StudioPage() {
                     <a
                       href={clip.downloadUrl}
                       download
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white text-zinc-200 hover:text-black border border-white/10 text-xs font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer shrink-0"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-white/[0.08] hover:bg-white text-zinc-200 hover:text-black border border-white/10 text-xs font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-all cursor-pointer shrink-0 w-full sm:w-auto"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Download</span>

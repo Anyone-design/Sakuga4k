@@ -34,14 +34,14 @@ export default function RootLayout({
         <Header />
 
         {/* Studio Content Viewport */}
-        <div className="relative flex-1 flex flex-col">
+        <div className="relative flex-1 flex flex-col w-full min-w-0">
           {children}
         </div>
 
         {/* Global Minimalist Footer */}
-        <footer className="relative z-10 border-t border-white/[0.06] py-4 px-6 text-xs text-zinc-500 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span>Sakuga4K v1.0</span>
+        <footer className="relative z-10 border-t border-white/[0.06] py-4 px-4 sm:px-6 text-xs text-zinc-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span>Sakuga4K v1.1</span>
             <span>•</span>
             <span>CRF 16 Visually Lossless</span>
           </div>

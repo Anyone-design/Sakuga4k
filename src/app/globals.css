@@ -15,11 +15,13 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   background-color: var(--bg-void);
   color: #f4f4f5;
+  max-width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   letter-spacing: -0.015em;
 }
 
