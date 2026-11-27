@@ -95,6 +95,9 @@ export function Header() {
             <span className="text-[10px] px-1.5 py-0.2 rounded text-zinc-400 bg-white/[0.06] font-medium border border-white/[0.08]">
               STUDIO
             </span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded text-indigo-300 bg-indigo-500/15 font-semibold border border-indigo-500/25 tracking-tight">
+              v1.1
+            </span>
           </div>
         </div>
 
@@ -110,7 +113,7 @@ export function Header() {
                 window.dispatchEvent(new CustomEvent("open-model-guide"));
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors cursor-pointer"
           >
             <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
             <span>Models</span>
@@ -121,7 +124,7 @@ export function Header() {
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setIsOpen((prev) => !prev)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${isOnline
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors ${isOnline
                 ? "bg-emerald-500/[0.08] border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/[0.14]"
                 : "bg-white/[0.04] border-white/[0.1] text-zinc-400 hover:text-white hover:bg-white/[0.08]"
               }`}
@@ -165,7 +168,7 @@ export function Header() {
                     type="button"
                     onClick={() => checkHealth(tunnelUrl)}
                     disabled={isChecking}
-                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition-colors"
+                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 rounded px-1 transition-colors"
                   >
                     <RefreshCw className={`w-3 h-3 ${isChecking ? "animate-spin text-indigo-400" : ""}`} />
                     <span>Ping</span>
@@ -179,11 +182,11 @@ export function Header() {
                   placeholder="https://xyz-random-name.trycloudflare.com"
                   value={tunnelUrl}
                   onChange={(e) => setTunnelUrl(e.target.value)}
-                  className="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:border-indigo-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
+                  className="px-4 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 transition-colors"
                 >
                   Save
                 </button>
@@ -194,8 +197,14 @@ export function Header() {
                 <div className="flex items-center gap-1.5">
                   {isOnline ? (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400 font-medium">Connected to T4 GPU (FP16 Ready)</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-emerald-400 font-medium">
+                        {health.gpuModel}
+                        {health.vramTotalMB > 0
+                          ? ` • ${health.vramFreeMB}/${health.vramTotalMB} MB Free`
+                          : " • FP16 Ready"}
+                        {health.engineVersion ? ` (v${health.engineVersion})` : ""}
+                      </span>
                     </>
                   ) : (
                     <>
@@ -208,7 +217,7 @@ export function Header() {
                   href="https://colab.research.google.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors"
+                  className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 rounded px-1 transition-colors"
                 >
                   <span>Open Colab</span>
                   <ExternalLink className="w-3 h-3" />
