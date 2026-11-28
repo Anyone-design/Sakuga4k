@@ -25,7 +25,7 @@ class DriveSyncManager:
 
     @classmethod
     def sync_to_drive(cls, source_file_path: str, filename: str) -> Optional[str]:
-        """Copies completed 4K clip into Google Drive MyDrive/Anime_4K_Output."""
+        """Copies completed 2K/4K clip into Google Drive MyDrive/Sakuga4K_Upscaled."""
         if not cls.is_drive_mounted():
             return None
 
